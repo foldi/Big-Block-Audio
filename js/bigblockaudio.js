@@ -159,32 +159,32 @@ BigBlockAudio = (function () {
 
 			switch (e.type) {
 				case "loadstart":
-					message = "Audio: eventHandler: Audio file " + e.target.id + " has started loading.";
+					message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " has started loading.";
 					break;	
 				case "progress":
-					message = "Audio: eventHandler: Audio file " + e.target.id + " is loading.";
+					message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is loading.";
 					break;	
 				case "suspend":
-					message = "Audio: eventHandler: The user agent is intentionally not currently fetching " + e.target.id + ", but does not have the entire media resource downloaded.";
+					message = "BigBlockAudio: eventHandler: The user agent is intentionally not currently fetching " + e.target.id + ", but does not have the entire media resource downloaded.";
 					break;
 				case "abort":
-					message = "Audio: eventHandler: The user agent stopped fetching " + e.target.id + " before it was completely downloaded, but not due to an error.";
+					message = "BigBlockAudio: eventHandler: The user agent stopped fetching " + e.target.id + " before it was completely downloaded, but not due to an error.";
 					break;	
 				case "error":
-					message = "Audio: eventHandler: An error occurred while fetching " + e.target.id + ".";
+					message = "BigBlockAudio: eventHandler: An error occurred while fetching " + e.target.id + ".";
 					if (BigBlockAudio.is_single_channel) {
 						BigBlockAudio.supported = false;	// will abort trying to load any further audio files
 						BigBlockAudio.playlist = [];							
 					}					
 					break;
 				case "emptied":
-					message = "Audio: eventHandler: " + e.target.id + "'s network state just switched to NETWORK_EMPTY.";
+					message = "BigBlockAudio: eventHandler: " + e.target.id + "'s network state just switched to NETWORK_EMPTY.";
 					break;	
 				case "stalled":
-					message = "Audio: eventHandler: The user agent is trying to fetch " + e.target.id + ", but data is unexpectedly not forthcoming.";					
+					message = "BigBlockAudio: eventHandler: The user agent is trying to fetch " + e.target.id + ", but data is unexpectedly not forthcoming.";					
 					break;																															
 				case "canplay":
-					message = "Audio: eventHandler: Audio file " + e.target.id + " is ready to play.";
+					message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is ready to play.";
 					if (typeof(after_load) !== "undefined") {
 						setTimeout(function () {after_load();}, 0);
 					}
@@ -212,14 +212,10 @@ BigBlockAudio = (function () {
 				BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
 			}
 
+			if (BigBlockAudio.debug === true) {
+				BigBlockAudio.Log(message);
+			}															
 
-			try {
-				if (BigBlockAudio.debug === true) {
-					throw new Error(message);
-				}															
-			} catch(e) {
-				BigBlockAudio.Log(e.name + ": " + e.message);
-			}
 		},
 		/**
 		 * Returns the empty string (a negative response), "maybe", or "probably" based on how confident the user agent is that it can play media resources of the given type.
@@ -359,7 +355,6 @@ BigBlockAudio = (function () {
 						}
 
 					}
-
 
 				} catch(e) {
 					BigBlockAudio.Log(e.name + ": " + e.message);
