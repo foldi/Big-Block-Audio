@@ -5,10 +5,40 @@
 		<meta name = "viewport" content = "user-scalable=no, width=device-width, initial-scale = 1.0">
         <title>Big Block Audio</title>
 
-		<script src="rel/bigblockaudio.js"></script>
+		<script src="js/bigblockaudio.js"></script>
 		
+		<script type="text/javascript">
+			
+			var body, loading, button;
+			
+			BigBlockAudio.debug = true;
+			BigBlockAudio.format = ["wav", "mp3", "ogg"]; // pass the supplied media formats
+			
+			BigBlockAudio.ready = function () {
+				BigBlockAudio.add("bing", "audio/", false, function () {
+					loading = document.getElementById("loading");
+					body = document.getElementsByTagName("body");
+					body[0].removeChild(loading);
+					button = document.createElement("input");
+					button.setAttribute("type", "submit");
+					button.setAttribute("value", "bing");
+					if (button.addEventListener) {
+						button.addEventListener("mouseup", function () {
+							BigBlockAudio.play("bing");
+						}, false); 
+					} else if (button.attachEvent) {
+						button.attachEvent("onmouseup", function () {
+							BigBlockAudio.play("bing");
+						});
+					}
+					body[0].appendChild(button);
+				});
+			}
+
+		
+		</script>
 	</head>
-	<body>
-	
+	<body onload="setTimeout('BigBlockAudio.ready()', 0)">
+		<div id="loading">loading audio...</div>
 	</body>
 </html>
