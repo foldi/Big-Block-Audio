@@ -1,21 +1,21 @@
 /**
- * Audio object
- * Provides an interface to play audio files. Browser must be HTML 5 compliant.
+ * Big Block Audio
+ * Copyright (C) 2011 Foldi, LLC
+ *
+ * Provides an interface to play audio files in an HTML 5 compliant web browser.
  * 
  * @author Vince Allen 01-01-2011
  * 
- * Big Block Framework
- * Copyright (C) 2011 Foldi, LLC
  * 
  */
 
-BigBlock.Audio = (function () {
+BigBlockAudio = (function () {
 
 	var supported = true;
 
 	if (typeof(window.Audio) === "undefined") {
 		supported = false;
-		BigBlock.Log.display("This browser does not support HTML5 audio.");
+		BigBlockAudio.Log("This browser does not support HTML5 audio.");
 	}															
 
 	return {
@@ -25,12 +25,14 @@ BigBlock.Audio = (function () {
 		playlist : {}, // contains instances of Audio elements
 		pause_timeout: null,
 		debug: false,
-		is_single_channel: false,  // typically set by checking BigBlock.is_iphone and BigBlock.is_ipad
+		is_single_channel: false, 
 		single_channel_id: null, // the id of the single channel Audio element
 		last_play: new Date().getTime(), // the last time the single channel Audio element played 
 		last_play_delay: 500, // the time to wait before allowing the single channel Audio element to play
 		muted : false,	
 		format: ["wav", "mp3", "ogg"],
+		loading_list: [],
+		loading_complete: false,
 		/**
 		 * Adds an audio element to the DOM. Also runs load() to set up the audio file for playback.
 		 * Uses new Audio([url]) which returns a new audio element, with the src attribute set to the value passed in the argument, if applicable.
@@ -54,12 +56,12 @@ BigBlock.Audio = (function () {
 						throw new Error("Path to audio file required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ': ' + e.message);
+					BigBlockAudio.Log(e.name + ': ' + e.message);
 				}
 
 				for (f = 0; f < this.format.length; f++) { // loop thru formats to find the first that this browser will play
 
-					mime_type = BigBlock.getMimeTypeFromFileExt(this.format[f]); // get mime-type
+					mime_type = BigBlockAudio.getMimeTypeFromFileExt(this.format[f]); // get mime-type
 
 					audio = new Audio(path + id + "." + this.format[f]); // create audio element
 
@@ -73,7 +75,7 @@ BigBlock.Audio = (function () {
 						supported_mime_type = this.canPlayType(audio, mime_type[i]); // check media.canPlayType 
 						if (supported_mime_type !== "") {
 							if (this.debug) {
-								BigBlock.Log.display("This browser will try to play " + id + " audio file in " + mime_type[i] + " format.");
+								BigBlockAudio.Log("This browser will try to play " + id + " audio file in " + mime_type[i] + " format.");
 							}
 							break;
 						}
@@ -93,7 +95,17 @@ BigBlock.Audio = (function () {
 					i = this.playlist[id];
 
 					if (i.addEventListener) {
-						i.addEventListener("canplay", function (e) {BigBlock.Audio.eventHandler(e, after_load);}, false); // add canplay event listener
+						i.addEventListener("canplay", function (e) {
+							BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("abort", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
+							BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);							
+							BigBlockAudio.eventHandler(e, after_load);
+						}, false); // add canplay event listener
 						i.addEventListener("loadstart", this.eventHandler, false); // add loadstart event listener
 						i.addEventListener("progress", this.eventHandler, false); 
 						i.addEventListener("suspend", this.eventHandler, false); 
@@ -102,7 +114,7 @@ BigBlock.Audio = (function () {
 						i.addEventListener("emptied", this.eventHandler, false); 
 						i.addEventListener("stalled", this.eventHandler, false); 
 					} else if (a.attachEvent) { // IE
-						i.attachEvent("canplay", function (e) {BigBlock.Audio.eventHandler(e, after_load);}, false);
+						i.attachEvent("canplay", function (e) {BigBlockAudio.eventHandler(e, after_load);}, false);
 						i.attachEvent("loadstart", this.eventHandler, false);
 						i.attachEvent("progress", this.eventHandler, false); 
 						i.attachEvent("suspend", this.eventHandler, false); 
@@ -113,6 +125,7 @@ BigBlock.Audio = (function () {
 					}
 
 					if (i.load) {
+						this.loading_list.push(id);						
 						i.load(); // load the file
 						/*
 						 * Firefox requires calling load() on the audio object. Safari seems to auto load the file, but does not throw an error calling load() directly.
@@ -124,15 +137,14 @@ BigBlock.Audio = (function () {
 						 */
 						this.supported = false;	// will abort trying to load any further audio files
 						this.playlist = [];				
-						BigBlock.Log.display("This browser does not support HTML5 audio.");	
+						BigBlockAudio.Log("This browser does not support HTML5 audio.");	
 					}
 
-
 				} else {
-					BigBlock.Log.display("Audio mime-type " + mime_type + " not supported. " + this.format + " files will not be played.");
-					if (BigBlock.Audio.is_single_channel) { // if single channel
-						BigBlock.Audio.supported = false;	// will abort trying to load any further audio files
-						BigBlock.Audio.playlist = [];							
+					BigBlockAudio.Log("Audio mime-type " + mime_type + " not supported. " + this.format + " files will not be played.");
+					if (BigBlockAudio.is_single_channel) { // if single channel
+						BigBlockAudio.supported = false;	// will abort trying to load any further audio files
+						BigBlockAudio.playlist = [];							
 					}					
 				}
 
@@ -140,7 +152,10 @@ BigBlock.Audio = (function () {
 
 		},
 		eventHandler: function (e, after_load) {
-			var message = "An audio event for " + e.target.id + " just fired.";
+
+			var i, message;
+
+			message = "An audio event for " + e.target.id + " just fired.";
 
 			switch (e.type) {
 				case "loadstart":
@@ -157,9 +172,9 @@ BigBlock.Audio = (function () {
 					break;	
 				case "error":
 					message = "Audio: eventHandler: An error occurred while fetching " + e.target.id + ".";
-					if (BigBlock.Audio.is_single_channel) {
-						BigBlock.Audio.supported = false;	// will abort trying to load any further audio files
-						BigBlock.Audio.playlist = [];							
+					if (BigBlockAudio.is_single_channel) {
+						BigBlockAudio.supported = false;	// will abort trying to load any further audio files
+						BigBlockAudio.playlist = [];							
 					}					
 					break;
 				case "emptied":
@@ -176,12 +191,34 @@ BigBlock.Audio = (function () {
 					break;
 			}
 
+			// remove file from loading array
+			if (e.type !== "loadstart" && e.type !== "progress" && e.type !== "suspend" && e.type !== "emptied" && e.type !== "stalled") {
+				for (i = 0; i < BigBlockAudio.loading_list.length; i++) {
+					if (BigBlockAudio.loading_list[i] === e.target.id) {
+						BigBlockAudio.loading_list.splice(i, 1);
+
+						if (BigBlockAudio.loading_list.length < 1) {
+							BigBlockAudio.loading_complete = true;
+						}
+						break;
+					}			
+				}
+				BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
+				BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
+				BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
+				BigBlockAudio.playlist[e.target.id].removeEventListener("abort", this.eventHandler, false);
+				BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
+				BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
+				BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
+			}
+
+
 			try {
-				if (BigBlock.Audio.debug === true) {
+				if (BigBlockAudio.debug === true) {
 					throw new Error(message);
 				}															
 			} catch(e) {
-				BigBlock.Log.display(e.name + ": " + e.message);
+				BigBlockAudio.Log(e.name + ": " + e.message);
 			}
 		},
 		/**
@@ -198,7 +235,7 @@ BigBlock.Audio = (function () {
 					throw new Error("A type is required");
 				}															
 			} catch(e) {
-				BigBlock.Log.display(e.name + ": " + e.message);
+				BigBlockAudio.Log(e.name + ": " + e.message);
 			}
 
 			try {
@@ -208,7 +245,7 @@ BigBlock.Audio = (function () {
 					return "maybe";
 				}						
 			} catch(e) {
-				BigBlock.Log.display(e.name + ': ' + e.message);
+				BigBlockAudio.Log(e.name + ': ' + e.message);
 			}
 
 			return false;
@@ -229,13 +266,13 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				try {
 					this.playlist[id].load(); // load the sound									
 				} catch(e) {
-					BigBlock.Log.display(e.name + ': ' + e.message);
+					BigBlockAudio.Log(e.name + ': ' + e.message);
 				}
 			}
 		},
@@ -256,7 +293,7 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				// rs;
@@ -285,12 +322,12 @@ BigBlock.Audio = (function () {
 									this.last_play = time_now;
 
 									this.pause_timeout = setTimeout(function () {
-										BigBlock.Audio.pause(BigBlock.Audio.single_channel_id);
+										BigBlockAudio.pause(BigBlockAudio.single_channel_id);
 									}, duration);								
 
 								} else {
 									if (this.debug) {
-										BigBlock.Log.display("Audio: State: " + rs.state + " Message: " + rs.message);
+										BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
 									}
 								}
 
@@ -325,7 +362,7 @@ BigBlock.Audio = (function () {
 
 
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 			}
 		},
@@ -344,7 +381,7 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				var rs = this.getReadyState(id, true);
@@ -356,7 +393,7 @@ BigBlock.Audio = (function () {
 							try {
 								this.playlist[id].pause(); // pause the sound
 							} catch(e) {
-								BigBlock.Log.display(e.name + ': ' + e.message);
+								BigBlockAudio.Log(e.name + ': ' + e.message);
 							}							
 						} else {
 							var timeRanges = this.getPlayed(id);
@@ -365,7 +402,7 @@ BigBlock.Audio = (function () {
 								try {
 									this.playlist[id].play(); // play the sound
 								} catch(e) {
-									BigBlock.Log.display(e.name + ': ' + e.message);
+									BigBlockAudio.Log(e.name + ': ' + e.message);
 								}								
 							}				
 						}
@@ -373,12 +410,12 @@ BigBlock.Audio = (function () {
 						try {
 							this.playlist[id].pause(); // pause the sound										
 						} catch(e) {
-							BigBlock.Log.display(e.name + ': ' + e.message);
+							BigBlockAudio.Log(e.name + ': ' + e.message);
 						}					
 					}
 
 				} else {
-					BigBlock.Log.display("Audio: " + rs.message);
+					BigBlockAudio.Log("Audio: " + rs.message);
 				}			
 			}
 		},
@@ -397,13 +434,13 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				try {
 					return this.playlist[id].paused;							
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}			
 			}
 		},
@@ -421,13 +458,13 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				try {
 					return this.playlist[id].played;									
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}			
 			}
 		},
@@ -446,13 +483,13 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				try {
 					return this.playlist[id].ended;
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}			
 			}
 		},
@@ -471,13 +508,13 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				try {
 					return this.playlist[id].playbackRate;
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}			
 			}
 		},				
@@ -497,7 +534,7 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				var state = this.playlist[id].readyState; // get the ready state
@@ -563,7 +600,7 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ': ' + e.message);
+					BigBlockAudio.Log(e.name + ': ' + e.message);
 				}
 
 				var state = this.playlist[id].networkState; // get the ready state
@@ -625,13 +662,13 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ': ' + e.message);
+					BigBlockAudio.Log(e.name + ': ' + e.message);
 				}
 
 				try {
 					return this.playlist[id].duration;										
 				} catch(e) {
-					BigBlock.Log.display(e.name + ': ' + e.message);
+					BigBlockAudio.Log(e.name + ': ' + e.message);
 				}			
 			}
 		},		
@@ -651,13 +688,13 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				try {
 					return this.playlist[id].currentTime;										
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}			
 			}
 		},		
@@ -678,13 +715,13 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				try {	
 					this.playlist[id].currentTime = time;										
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}			
 			}
 
@@ -704,13 +741,13 @@ BigBlock.Audio = (function () {
 						throw new Error("An id is required");
 					}											
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				try {
 					return this.playlist[id].volume;										
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 			}
 		},		
@@ -734,13 +771,13 @@ BigBlock.Audio = (function () {
 						throw new Error("A volume value between 0.0 and 1.0 is required");
 					}																
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}
 
 				try {
 					this.playlist[id].volume = volume;										
 				} catch(e) {
-					BigBlock.Log.display(e.name + ": " + e.message);
+					BigBlockAudio.Log(e.name + ": " + e.message);
 				}			
 			}
 		},				
@@ -760,7 +797,7 @@ BigBlock.Audio = (function () {
 						try {	
 							this.playlist[i].muted = true; // mutes the sound						
 						} catch(e) {
-							BigBlock.Log.display(e.name + ": " + e.message);
+							BigBlockAudio.Log(e.name + ": " + e.message);
 						}
 					}			
 				}
@@ -786,7 +823,7 @@ BigBlock.Audio = (function () {
 						try {
 							this.playlist[i].muted = false;	// unmutes the sound										
 						} catch(e) {
-							BigBlock.Log.display(e.name + ": " + e.message);
+							BigBlockAudio.Log(e.name + ": " + e.message);
 						}
 					}				
 				}
@@ -795,8 +832,46 @@ BigBlock.Audio = (function () {
 
 			}
 
-		}
+		},
+		Log: function (str) {
+			try {
+				if (typeof(console) !== "undefined") {
+					console.log(str); // output error to console
+				} else if (typeof(opera) !== "undefined" && typeof(opera.wiiremote) !== "undefined") { // wii uses alerts
+					alert(str);
+				} else if (typeof(opera) !== "undefined") { // opera uses error console
+					opera.postError(str);
+				}
+			} catch(e) {
+			  // do nothing
+			}			
+		},
+		getMimeTypeFromFileExt: function (ext) {
+			try {
+				if (typeof(ext) === "undefined") {
+					throw new Error("BigBlock.getMimeTypeFromFileExt(ext): An extension is required.");
+				} else {
 
+					switch (ext) {
+						case "aif":
+							return ["audio/x-aiff", "audio/x-aiff"];
+						case "au":
+						case "snd":
+							return ["audio/basic"];
+						case "ogg":
+							return ["audio/ogg"];			
+						case "mp3":
+							return ["audio/mpeg", "audio/x-mpeg"];																					
+						case "wav":
+							return ["audio/wav", "audio/x-wav"];
+						default:
+							return false;
+					}			
+				}								
+			} catch(e) {
+				BigBlock.Log.display(e.name + ": " + e.message);
+			}			
+		}
 	};
 
 })();
