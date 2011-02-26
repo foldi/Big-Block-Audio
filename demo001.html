@@ -18,7 +18,9 @@
 				BigBlockAudio.add("bing", "audio/", false, function () {
 					loading = document.getElementById("loading");
 					body = document.getElementsByTagName("body");
-					body[0].removeChild(loading);
+					if (loading) {
+						body[0].removeChild(loading);
+					}
 					button = document.createElement("input");
 					button.setAttribute("type", "submit");
 					button.setAttribute("value", "bing");
