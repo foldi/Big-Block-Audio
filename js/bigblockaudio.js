@@ -104,7 +104,7 @@ BigBlockAudio = (function () {
 							BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
 							BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
 							BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);							
-							BigBlockAudio.eventHandler(e, after_load);
+							BigBlockAudio.eventHandler(e, after_load(e));
 						}, false); // add canplay event listener
 						i.addEventListener("loadstart", this.eventHandler, false); // add loadstart event listener
 						i.addEventListener("progress", this.eventHandler, false); 
