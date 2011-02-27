@@ -103,8 +103,10 @@ BigBlockAudio = (function () {
 							BigBlockAudio.playlist[e.target.id].removeEventListener("abort", this.eventHandler, false);
 							BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
 							BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
-							BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);							
-							BigBlockAudio.eventHandler(e, after_load(e));
+							BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
+							if (after_load) {							
+								BigBlockAudio.eventHandler(e, after_load(e));
+							}
 						}, false); // add canplay event listener
 						i.addEventListener("loadstart", this.eventHandler, false); // add loadstart event listener
 						i.addEventListener("progress", this.eventHandler, false); 
@@ -185,7 +187,7 @@ BigBlockAudio = (function () {
 					break;																															
 				case "canplay":
 					message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is ready to play.";
-					if (typeof(after_load) !== "undefined") {
+					if (typeof(after_load) === "function") {
 						setTimeout(function () {after_load();}, 0);
 					}
 					break;
@@ -313,12 +315,19 @@ BigBlockAudio = (function () {
 									this.pause(this.single_channel_id); // pause the sound
 
 									this.setCurrentTime(this.single_channel_id, start_time); // set the time to start playing
-
+									
+									if (before_play && typeof(before_play) === "function") { // run before_play
+										before_play();
+									}
+									
 									this.playlist[this.single_channel_id].play(); // play the sound
 									this.last_play = time_now;
 
 									this.pause_timeout = setTimeout(function () {
 										BigBlockAudio.pause(BigBlockAudio.single_channel_id);
+										if (after_play && typeof(after_play) === "function") { // run after_play
+											after_play();
+										}										
 									}, duration);								
 
 								} else {
