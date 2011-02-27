@@ -40,6 +40,7 @@ BigBlockAudio = (function () {
 		 * @param {String} id
 		 * @param {String} path
 		 * @param {String} loop
+		 * @param {Function} after_load
 		 * 
 		 */				
 		add: function(id, path, loop, after_load) {
