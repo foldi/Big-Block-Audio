@@ -9,54 +9,60 @@
 		
 		<script type="text/javascript">
 			
-			var i, path, body, loading, button, filename, complete_msg;
+			var i, path, body, loading, button, filename, complete_msg, error_msg;
 			
-			path = "audio/";
-			BigBlockAudio.debug = true;
-			BigBlockAudio.format = ["wav", "mp3", "ogg"]; // pass the supplied media formats
-			
+			path = "http://www.foldifoldi.com/audio/";
+			BigBlockAudio.debug = true;			
 			BigBlockAudio.ready = function () {
-				//BigBlockAudio.files_to_play = ["alleffects"];
+
+				if (BigBlockAudio.supported) {
+					BigBlockAudio.is_single_channel = true;
+					BigBlockAudio.single_channel_id = "alleffects";
+					BigBlockAudio.track_labels = {
+						bing: {
+							start_time: 0,
+							duration: 500
+						},
+						blip: {
+							start_time: 1.02,
+							duration: 100
+						},
+						bonk: {
+							start_time: 1.574,
+							duration: 167
+						},
+						boom: {
+							start_time: 2.21,
+							duration: 491
+						},
+						coin: {
+							start_time: 3.153,
+							duration: 358
+						},
+						eeoo: {
+							start_time: 3.975,
+							duration: 457
+						},
+						jump: {
+							start_time: 4.878,
+							duration: 179
+						}
+					};
+					BigBlockAudio.add(BigBlockAudio.single_channel_id, path, false);
 				
-				BigBlockAudio.is_single_channel = true;
-				BigBlockAudio.single_channel_id = "alleffects";
-				BigBlockAudio.track_labels = {
-					bing: {
-						start_time: 0,
-						duration: 500
-					},
-					blip: {
-						start_time: 1.02,
-						duration: 100
-					},
-					bonk: {
-						start_time: 1.574,
-						duration: 167
-					},
-					boom: {
-						start_time: 2.21,
-						duration: 491
-					},
-					coin: {
-						start_time: 3.153,
-						duration: 358
-					},
-					eeoo: {
-						start_time: 3.975,
-						duration: 457
-					},
-					jump: {
-						start_time: 4.878,
-						duration: 179
+					for (i in BigBlockAudio.track_labels) {
+						if (BigBlockAudio.track_labels.hasOwnProperty(i)) {
+							BigBlockAudio.create_button(i);
+						}
 					}
-				};
-				BigBlockAudio.add(BigBlockAudio.single_channel_id, path, false);
-				
-				for (i in BigBlockAudio.track_labels) {
-					if (BigBlockAudio.track_labels.hasOwnProperty(i)) {
-					//	filename = i;
-						BigBlockAudio.create_button(i);
+				} else {
+					loading = document.getElementById("loading");
+					body = document.getElementsByTagName("body");
+					if (loading) {
+						body[0].removeChild(loading);
 					}
+					error_msg = document.createTextNode("This browser does not supported HTML5 audio.");
+					body[0].appendChild(error_msg);					
 				}
 			}
 			

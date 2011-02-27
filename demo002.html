@@ -9,20 +9,29 @@
 		
 		<script type="text/javascript">
 			
-			var i, path, body, loading, button, filename, complete_msg;
+			var i, path, body, loading, button, filename, complete_msg, error_msg;
 			
 			path = "http://www.foldifoldi.com/audio/";
 			BigBlockAudio.debug = true;
-			BigBlockAudio.format = ["wav", "mp3", "ogg"]; // pass the supplied media formats
-			
+						
 			BigBlockAudio.ready = function () {
-				BigBlockAudio.files_to_play = ["bing", "blip", "bonk", "boom", "coin", "eeoo", "jump"];
 				
-				for (i = 0; i < BigBlockAudio.files_to_play.length; i++) {
-					filename = BigBlockAudio.files_to_play[i];
-					BigBlockAudio.add(filename, path, false, function (e) {
-						BigBlockAudio.create_button(e.srcElement.id);
-					});
+				if (BigBlockAudio.supported) {
+					BigBlockAudio.files_to_play = ["bing", "blip", "bonk", "boom", "coin", "eeoo", "jump"];
+					for (i = 0; i < BigBlockAudio.files_to_play.length; i++) {
+						filename = BigBlockAudio.files_to_play[i];
+						BigBlockAudio.add(filename, path, false, function (e) {
+							BigBlockAudio.create_button(e.srcElement.id);
+						});
+					}
+				} else {
+					loading = document.getElementById("loading");
+					body = document.getElementsByTagName("body");
+					if (loading) {
+						body[0].removeChild(loading);
+					}
+					error_msg = document.createTextNode("This browser does not supported HTML5 audio.");
+					body[0].appendChild(error_msg);				
 				}
 			}
 			
