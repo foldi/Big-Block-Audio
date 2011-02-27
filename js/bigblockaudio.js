@@ -47,6 +47,7 @@ BigBlockAudio = (function () {
 		format: ["wav", "mp3", "ogg"],
 		loading_list: [],
 		loading_complete: false,
+		after_loading_complete: false,
 		/**
 		 * Adds an audio element to the DOM. Also runs load() to set up the audio file for playback.
 		 * Uses new Audio([url]) which returns a new audio element, with the src attribute set to the value passed in the argument, if applicable.
@@ -218,7 +219,10 @@ BigBlockAudio = (function () {
 
 						if (BigBlockAudio.loading_list.length < 1) {
 							BigBlockAudio.loading_complete = true;
-						}
+							if (BigBlockAudio.after_loading_complete && typeof(BigBlockAudio.after_loading_complete) === "function") {
+								BigBlockAudio.after_loading_complete();
+							}
+ 						}
 						break;
 					}			
 				}
