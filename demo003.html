@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name = "viewport" content = "user-scalable=no, width=device-width, initial-scale = 1.0">
+        <title>Big Block Audio</title>
+
+		<script src="js/bigblockaudio.js"></script>
+		
+		<script type="text/javascript">
+			
+			var i, path, body, loading, button, filename, complete_msg;
+			
+			path = "audio/";
+			BigBlockAudio.debug = true;
+			BigBlockAudio.format = ["wav", "mp3", "ogg"]; // pass the supplied media formats
+			
+			BigBlockAudio.ready = function () {
+				//BigBlockAudio.files_to_play = ["alleffects"];
+				
+				BigBlockAudio.is_single_channel = true;
+				BigBlockAudio.single_channel_id = "alleffects";
+				BigBlockAudio.track_labels = {
+					bing: {
+						start_time: 0,
+						duration: 500
+					},
+					blip: {
+						start_time: 1.02,
+						duration: 100
+					},
+					bonk: {
+						start_time: 1.034,
+						duration: 345
+					},
+					boom: {
+						start_time: 1.465,
+						duration: 522
+					},
+					coin: {
+						start_time: 2.08,
+						duration: 400
+					},
+					eeoo: {
+						start_time: 2.621,
+						duration: 435
+					},
+					jump: {
+						start_time: 2.621,
+						duration: 435
+					}
+				};
+				BigBlockAudio.add(BigBlockAudio.single_channel_id, path, false);
+				
+				for (i in BigBlockAudio.track_labels) {
+					if (BigBlockAudio.track_labels.hasOwnProperty(i)) {
+					//	filename = i;
+						BigBlockAudio.create_button(i);
+					}
+				}
+			}
+			
+			BigBlockAudio.create_button = function (filename) {
+				loading = document.getElementById("loading");
+				body = document.getElementsByTagName("body");
+				if (loading) {
+					body[0].removeChild(loading);
+				}
+				button = document.createElement("input");
+				button.setAttribute("type", "submit");
+				button.setAttribute("value", filename);
+				if (button.addEventListener) {
+					button.addEventListener("mouseup", function () {
+						BigBlockAudio.play(filename);
+					}, false); 
+				} else if (button.attachEvent) {
+					button.attachEvent("onmouseup", function () {
+						BigBlockAudio.play(filename);
+					});
+				}
+				body[0].appendChild(button);
+				setTimeout(function () {
+					if (BigBlockAudio.loading_complete === true) {
+						complete_msg = document.createTextNode("loading complete!");
+						body[0].appendChild(complete_msg);
+					}
+				}, 0);
+			};
+		
+		</script>
+	</head>
+	<body onload="setTimeout('BigBlockAudio.ready()', 0)">
+		<div id="loading">loading audio...</div>
+	</body>
+</html>
