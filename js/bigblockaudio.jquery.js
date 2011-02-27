@@ -7,7 +7,9 @@ $.fn.BigBlockAudio = function(options) {
 		after_loading_complete: false, // function to run after all files have successfully loaded
 		is_single_channel: false, // set to true to use one file and track labels
 		single_channel_id: false, // set equal to the filename of the single audio file; do not include file extension
-		format: ["wav", "mp3", "ogg"] // formats included in the path of the audio files sorted in order of preference
+		format: ["wav", "mp3", "ogg"], // formats included in the path of the audio files sorted in order of preference
+		track_labels: {}, // key/value pairs describing the start time and duration of clips in the single channel audio file
+		last_play_delay: 0 // the time to wait before allowing the single channel Audio element to play
 	};
 	var options = $.extend(defaults, options);
 	
@@ -47,12 +49,14 @@ $.fn.BigBlockAudio = function(options) {
 				
 				// user defined properties
 				
-				debug_message_target: options.debug_message_target, // the id of a dom element that will receive debug messages; typically a textarea
+				debug_message_target: options.debug_message_target, 
 				debug: options.debug,
 				after_loading_complete: options.after_loading_complete,
 				is_single_channel: options.is_single_channel, 
-				single_channel_id: options.single_channel_id, // the id of the single channel Audio element
+				single_channel_id: options.single_channel_id, 
 				format: options.format,
+				track_labels: options.track_labels,
+				last_play_delay: options.last_play_delay, 
 				
 				// end user defined properties
 								
@@ -60,7 +64,6 @@ $.fn.BigBlockAudio = function(options) {
 				playlist : {}, // contains instances of Audio elements
 				pause_timeout: null,
 				last_play: new Date().getTime(), // the last time the single channel Audio element played 
-				last_play_delay: 50, // the time to wait before allowing the single channel Audio element to play
 				muted : false,
 				loading_list: [],
 				loading_complete: false,
@@ -235,10 +238,10 @@ $.fn.BigBlockAudio = function(options) {
 								BigBlockAudio.loading_list.splice(i, 1);
 
 								if (BigBlockAudio.loading_list.length < 1) {
-									BigBlockAudio.loading_complete = true;
 									if (BigBlockAudio.after_loading_complete && typeof(BigBlockAudio.after_loading_complete) === "function") {
 										BigBlockAudio.after_loading_complete();
 									}
+									BigBlockAudio.loading_complete = true;
 		 						}
 								break;
 							}			
