@@ -10,12 +10,26 @@
  */
 
 BigBlockAudio = (function () {
-
+	
+	var Log = function (str) {
+		try {
+			if (typeof(console) !== "undefined") {
+				console.log(str); // output error to console
+			} else if (typeof(opera) !== "undefined" && typeof(opera.wiiremote) !== "undefined") { // wii uses alerts
+				alert(str);
+			} else if (typeof(opera) !== "undefined") { // opera uses error console
+				opera.postError(str);
+			}
+		} catch(e) {
+		  // do nothing
+		}			
+	}
+	
 	var supported = true;
 
 	if (typeof(window.Audio) === "undefined") {
 		supported = false;
-		BigBlockAudio.Log("This browser does not support HTML5 audio.");
+		Log("This browser does not support HTML5 audio.");
 	}															
 
 	return {
@@ -838,19 +852,7 @@ BigBlockAudio = (function () {
 			}
 
 		},
-		Log: function (str) {
-			try {
-				if (typeof(console) !== "undefined") {
-					console.log(str); // output error to console
-				} else if (typeof(opera) !== "undefined" && typeof(opera.wiiremote) !== "undefined") { // wii uses alerts
-					alert(str);
-				} else if (typeof(opera) !== "undefined") { // opera uses error console
-					opera.postError(str);
-				}
-			} catch(e) {
-			  // do nothing
-			}			
-		},
+		Log: Log,
 		getMimeTypeFromFileExt: function (ext) {
 			try {
 				if (typeof(ext) === "undefined") {
@@ -879,4 +881,4 @@ BigBlockAudio = (function () {
 		}
 	};
 
-})();
+}());
