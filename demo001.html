@@ -9,32 +9,44 @@
 		
 		<script type="text/javascript">
 			
-			var body, loading, button;
+			var body, loading, button, error_msg;
 			
 			BigBlockAudio.debug = true;
 			BigBlockAudio.format = ["wav", "mp3", "ogg"]; // pass the supplied media formats
 			
 			BigBlockAudio.ready = function () {
-				BigBlockAudio.add("bing", "audio/", false, function () {
+				
+				if (BigBlockAudio.supported) {
+					BigBlockAudio.add("bing", "audio/", false, function () {
+						loading = document.getElementById("loading");
+						body = document.getElementsByTagName("body");
+						if (loading) {
+							body[0].removeChild(loading);
+						}
+						button = document.createElement("input");
+						button.setAttribute("type", "submit");
+						button.setAttribute("value", "bing");
+						if (button.addEventListener) {
+							button.addEventListener("mouseup", function () {
+								BigBlockAudio.play("bing");
+							}, false); 
+						} else if (button.attachEvent) {
+							button.attachEvent("onmouseup", function () {
+								BigBlockAudio.play("bing");
+							});
+						}
+						body[0].appendChild(button);
+					});					
+				} else {
 					loading = document.getElementById("loading");
 					body = document.getElementsByTagName("body");
 					if (loading) {
 						body[0].removeChild(loading);
 					}
-					button = document.createElement("input");
-					button.setAttribute("type", "submit");
-					button.setAttribute("value", "bing");
-					if (button.addEventListener) {
-						button.addEventListener("mouseup", function () {
-							BigBlockAudio.play("bing");
-						}, false); 
-					} else if (button.attachEvent) {
-						button.attachEvent("onmouseup", function () {
-							BigBlockAudio.play("bing");
-						});
-					}
-					body[0].appendChild(button);
-				});
+					error_msg = document.createTextNode("This browser does not supported HTML5 audio.");
+					body[0].appendChild(error_msg);					
+				}
+
 			}
 
 		
