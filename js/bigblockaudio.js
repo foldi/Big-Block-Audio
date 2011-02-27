@@ -11,21 +11,29 @@
 
 BigBlockAudio = (function () {
 	
-	var Log = function (str) {
+	var Log, supported;
+	
+	Log = function (str) {
+		var msg;
 		try {
-			if (typeof(console) !== "undefined") {
-				console.log(str); // output error to console
-			} else if (typeof(opera) !== "undefined" && typeof(opera.wiiremote) !== "undefined") { // wii uses alerts
-				alert(str);
-			} else if (typeof(opera) !== "undefined") { // opera uses error console
-				opera.postError(str);
+			if (BigBlockAudio.debug_message_target) {
+				msg = document.createTextNode(str + "\n");
+				BigBlockAudio.debug_message_target.appendChild(msg);				
+			} else {
+				if (typeof(console) !== "undefined") {
+					console.log(str); // output error to console
+				} else if (typeof(opera) !== "undefined" && typeof(opera.wiiremote) !== "undefined") { // wii uses alerts
+					alert(str);
+				} else if (typeof(opera) !== "undefined") { // opera uses error console
+					opera.postError(str);
+				}
 			}
 		} catch(e) {
 		  // do nothing
 		}			
 	}
 	
-	var supported = true;
+	supported = true;
 
 	if (typeof(window.Audio) === "undefined") {
 		supported = false;
@@ -38,6 +46,7 @@ BigBlockAudio = (function () {
 		supported : supported,
 		playlist : {}, // contains instances of Audio elements
 		pause_timeout: null,
+		debug_message_target: null, // the id of a dom element that will receive debug messages; typically a textarea
 		debug: false,
 		is_single_channel: false, 
 		single_channel_id: null, // the id of the single channel Audio element

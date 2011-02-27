@@ -14,7 +14,20 @@
 			path = "http://www.foldifoldi.com/audio/";
 						
 			BigBlockAudio.ready = function () {
+				BigBlockAudio.debug_message_target = document.getElementById("debug_messages");
 				BigBlockAudio.debug = true;
+				BigBlockAudio.after_loading_complete = function () {
+					if (BigBlockAudio.loading_complete === true) {
+						if (!document.getElementById("container_complete")) {
+							container_complete = document.createElement("div");
+							container_complete.setAttribute("id", "container_complete");
+							container_complete.setAttribute("style", "padding-top:10px;");
+							complete_msg = document.createTextNode("loading complete!");
+							container_complete.appendChild(complete_msg);
+							body[0].appendChild(container_complete);
+						}
+					}
+				};
 				if (BigBlockAudio.supported) {
 					BigBlockAudio.add("bing", "audio/", false, function () {
 						loading = document.getElementById("loading");
@@ -34,19 +47,7 @@
 								BigBlockAudio.play("bing");
 							});
 						}
-						body[0].appendChild(button);
-						setTimeout(function () {
-							if (BigBlockAudio.loading_complete === true) {
-								if (!document.getElementById("container_complete")) {
-									container_complete = document.createElement("div");
-									container_complete.setAttribute("id", "container_complete");
-									container_complete.setAttribute("style", "padding-top:10px;");
-									complete_msg = document.createTextNode("loading complete!");
-									container_complete.appendChild(complete_msg);
-									body[0].appendChild(container_complete);
-								}
-							}
-						}, 0);						
+						body[0].appendChild(button);						
 					});					
 				} else {
 					loading = document.getElementById("loading");
@@ -64,7 +65,8 @@
 		</script>
 	</head>
 	<body onload="setTimeout('BigBlockAudio.ready()', 0)">
-		<div id="loading">loading audio...</div>
 		<noscript>You must enable JavaScript to view this demo.</noscript>
+		<div id="loading">loading audio...</div>
+		<div><textarea id="debug_messages" cols="100" rows="5" style="margin-bottom:10px;"></textarea></div>
 	</body>
 </html>
