@@ -28,11 +28,13 @@
 					}
 				});
 				BigBlockAudio.add("bing", path, false, function () {
-					$("#loading").remove();
-					button = $("<input></input>").attr("type", "submit").attr("value", "bing").bind("click", function () {
-						BigBlockAudio.play("bing");
-					});
-					$("body").append(button);					
+					if (!BigBlockAudio.loading_complete) {
+						$("#loading").remove();
+						button = $("<input></input>").attr("type", "submit").attr("value", "bing").bind("click", function () {
+							BigBlockAudio.play("bing");
+						});
+						$("body").append(button);
+					}				
 				});
 			});
 		

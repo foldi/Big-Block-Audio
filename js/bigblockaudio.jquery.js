@@ -238,10 +238,10 @@ $.fn.BigBlockAudio = function(options) {
 								BigBlockAudio.loading_list.splice(i, 1);
 
 								if (BigBlockAudio.loading_list.length < 1) {
+									BigBlockAudio.loading_complete = true;
 									if (BigBlockAudio.after_loading_complete && typeof(BigBlockAudio.after_loading_complete) === "function") {
 										BigBlockAudio.after_loading_complete();
 									}
-									BigBlockAudio.loading_complete = true;
 		 						}
 								break;
 							}			
