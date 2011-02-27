@@ -17,7 +17,15 @@
 			$(document).ready(function () {
 				$(document).BigBlockAudio({
 					debug_message_target: $("#debug_messages"),
-					debug: true
+					debug: true,
+					after_loading_complete : function () {
+						if (BigBlockAudio.loading_complete === true) {
+							if (!document.getElementById("container_complete")) {
+								container_complete = $("<div></div>").text("loading complete!").attr("id", "container_complete").attr("style", "padding-top:10px;");
+								$("body").append(container_complete);
+							}
+						}
+					}
 				});
 				BigBlockAudio.add("bing", path, false, function () {
 					$("#loading").remove();
