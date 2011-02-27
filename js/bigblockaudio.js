@@ -28,7 +28,7 @@ BigBlockAudio = (function () {
 		is_single_channel: false, 
 		single_channel_id: null, // the id of the single channel Audio element
 		last_play: new Date().getTime(), // the last time the single channel Audio element played 
-		last_play_delay: 500, // the time to wait before allowing the single channel Audio element to play
+		last_play_delay: 50, // the time to wait before allowing the single channel Audio element to play
 		muted : false,	
 		format: ["wav", "mp3", "ogg"],
 		loading_list: [],
