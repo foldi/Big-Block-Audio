@@ -11,10 +11,10 @@
 			
 			var body, loading, button, error_msg;
 			
-			BigBlockAudio.debug = true;
+			path = "http://www.foldifoldi.com/audio/";
 						
 			BigBlockAudio.ready = function () {
-				
+				BigBlockAudio.debug = true;
 				if (BigBlockAudio.supported) {
 					BigBlockAudio.add("bing", "audio/", false, function () {
 						loading = document.getElementById("loading");

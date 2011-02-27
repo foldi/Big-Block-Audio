@@ -12,12 +12,13 @@
 			var i, path, body, loading, button, filename, complete_msg, error_msg;
 			
 			path = "http://www.foldifoldi.com/audio/";
-			BigBlockAudio.debug = true;			
+						
 			BigBlockAudio.ready = function () {
 
 				if (BigBlockAudio.supported) {
-					BigBlockAudio.is_single_channel = true;
-					BigBlockAudio.single_channel_id = "alleffects";
+					BigBlockAudio.debug = true;
+					BigBlockAudio.is_single_channel = false;
+					BigBlockAudio.single_channel_id = "bing";
 					BigBlockAudio.track_labels = {
 						bing: {
 							start_time: 0,
@@ -49,12 +50,13 @@
 						}
 					};
 					BigBlockAudio.add(BigBlockAudio.single_channel_id, path, false);
-				
-					for (i in BigBlockAudio.track_labels) {
+					
+					/*for (i in BigBlockAudio.track_labels) {
 						if (BigBlockAudio.track_labels.hasOwnProperty(i)) {
 							BigBlockAudio.create_button(i);
 						}
-					}
+					}*/
+				
 				} else {
 					loading = document.getElementById("loading");
 					body = document.getElementsByTagName("body");

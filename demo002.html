@@ -12,10 +12,9 @@
 			var i, path, body, loading, button, filename, complete_msg, error_msg;
 			
 			path = "http://www.foldifoldi.com/audio/";
-			BigBlockAudio.debug = true;
 						
 			BigBlockAudio.ready = function () {
-				
+				BigBlockAudio.debug = true;
 				if (BigBlockAudio.supported) {
 					BigBlockAudio.files_to_play = ["bing", "blip", "bonk", "boom", "coin", "eeoo", "jump"];
 					for (i = 0; i < BigBlockAudio.files_to_play.length; i++) {
