@@ -119,8 +119,10 @@ BigBlockAudio = (function () {
 							BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
 							BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
 							BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
-							if (after_load) {							
+							if (after_load && typeof(after_load) === "function") {							
 								BigBlockAudio.eventHandler(e, after_load(e));
+							} else {
+								BigBlockAudio.eventHandler(e);
 							}
 						}, false); // add canplay event listener
 						i.addEventListener("loadstart", this.eventHandler, false); // add loadstart event listener
@@ -227,6 +229,7 @@ BigBlockAudio = (function () {
 				BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
 				BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
 				BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
+				BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", this.eventHandler, false);
 			}
 
 			if (BigBlockAudio.debug === true) {
