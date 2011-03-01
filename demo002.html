@@ -33,12 +33,14 @@
 					for (i = 0; i < BigBlockAudio.files_to_play.length; i++) {
 						filename = BigBlockAudio.files_to_play[i];
 						BigBlockAudio.add(filename, path, false, function (e) {
-							BigBlockAudio.create_button(e.target.id);
+							if (!BigBlockAudio.loading_complete) {
+								BigBlockAudio.create_button(e.target.id);
+							}
 						});
 					}
 				} else {
 					loading = document.getElementById("loading");
-					body = document.getElementsByTagName("body");
+					
 					if (loading) {
 						body[0].removeChild(loading);
 					}
@@ -66,6 +68,11 @@
 					});
 				}
 				body[0].appendChild(button);
+				setTimeout(function () {
+					if (BigBlockAudio.loading_complete === true) {
+						delete BigBlockAudio.add;
+					}
+				}, 0);
 			};
 		
 		</script>

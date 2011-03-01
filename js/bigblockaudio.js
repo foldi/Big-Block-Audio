@@ -121,41 +121,41 @@ BigBlockAudio = (function () {
 
 					if (i.addEventListener) {
 						i.addEventListener("canplay", function (e) {
-							BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", this.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("abort", this.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
-							BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
+							//BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", BigBlockAudio.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", BigBlockAudio.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("progress", BigBlockAudio.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", BigBlockAudio.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("abort", BigBlockAudio.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("error", BigBlockAudio.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", BigBlockAudio.eventHandler, false);				
+							BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", BigBlockAudio.eventHandler, false);
 							if (after_load && typeof(after_load) === "function") {							
 								BigBlockAudio.eventHandler(e, after_load(e));
 							} else {
 								BigBlockAudio.eventHandler(e);
 							}
 						}, false); // add canplay event listener
-						i.addEventListener("loadstart", this.eventHandler, false); // add loadstart event listener
-						i.addEventListener("progress", this.eventHandler, false); 
-						i.addEventListener("suspend", this.eventHandler, false); 
-						i.addEventListener("abort", this.eventHandler, false); 
-						i.addEventListener("error", this.eventHandler, false); 
-						i.addEventListener("emptied", this.eventHandler, false); 
-						i.addEventListener("stalled", this.eventHandler, false); 
+						i.addEventListener("loadstart", BigBlockAudio.eventHandler, false); // add loadstart event listener
+						i.addEventListener("progress", BigBlockAudio.eventHandler, false); 
+						i.addEventListener("suspend", BigBlockAudio.eventHandler, false); 
+						i.addEventListener("abort", BigBlockAudio.eventHandler, false); 
+						i.addEventListener("error", BigBlockAudio.eventHandler, false); 
+						i.addEventListener("emptied", BigBlockAudio.eventHandler, false); 
+						i.addEventListener("stalled", BigBlockAudio.eventHandler, false); 
 					} else if (a.attachEvent) { // IE
 						i.attachEvent("canplay", function (e) {BigBlockAudio.eventHandler(e, after_load);}, false);
-						i.attachEvent("loadstart", this.eventHandler, false);
-						i.attachEvent("progress", this.eventHandler, false); 
-						i.attachEvent("suspend", this.eventHandler, false); 
-						i.attachEvent("abort", this.eventHandler, false); 
-						i.attachEvent("error", this.eventHandler, false); 
-						i.attachEvent("emptied", this.eventHandler, false); 
-						i.attachEvent("stalled", this.eventHandler, false);					
+						i.attachEvent("loadstart", BigBlockAudio.eventHandler, false);
+						i.attachEvent("progress", BigBlockAudio.eventHandler, false); 
+						i.attachEvent("suspend", BigBlockAudio.eventHandler, false); 
+						i.attachEvent("abort", BigBlockAudio.eventHandler, false); 
+						i.attachEvent("error", BigBlockAudio.eventHandler, false); 
+						i.attachEvent("emptied", BigBlockAudio.eventHandler, false); 
+						i.attachEvent("stalled", BigBlockAudio.eventHandler, false);					
 					}
 
 					if (i.load) {
 						this.loading_list.push(id);						
-						i.load(); // load the file
+						this.load_file(id); // load the file
 						/*
 						 * Firefox requires calling load() on the audio object. Safari seems to auto load the file, but does not throw an error calling load() directly.
 						 */							
@@ -214,9 +214,10 @@ BigBlockAudio = (function () {
 					break;																															
 				case "canplay":
 					message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is ready to play.";
-					if (typeof(after_load) === "function") {
+					if (typeof(after_load) === "function" && !BigBlockAudio.loading_complete && BigBlockAudio.playlist[e.target.id].loaded) {
 						setTimeout(function () {after_load();}, 0);
 					}
+					BigBlockAudio.playlist[e.target.id].loaded = true;
 					break;
 			}
 
@@ -242,7 +243,7 @@ BigBlockAudio = (function () {
 				BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
 				BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
 				BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
-				BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", this.eventHandler, false);
+				//BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", this.eventHandler, false);
 			}
 
 			if (BigBlockAudio.debug === true) {
@@ -286,10 +287,10 @@ BigBlockAudio = (function () {
 		 * @param {String} id
 		 * 
 		 */			
-		load: function (id) {
-
+		load_file: function (id) {
+						
 			if (typeof(this.playlist[id]) !== "undefined" && this.supported) { // must be a valid audio file; browser must support HTML5 Audio
-
+					
 				try {
 					if (typeof(id) === "undefined") {
 						throw new Error("An id is required");

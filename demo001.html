@@ -35,19 +35,21 @@
 						if (loading) {
 							body[0].removeChild(loading);
 						}
-						button = document.createElement("input");
-						button.setAttribute("type", "submit");
-						button.setAttribute("value", "bing");
-						if (button.addEventListener) {
-							button.addEventListener("mouseup", function () {
-								BigBlockAudio.play("bing");
-							}, false); 
-						} else if (button.attachEvent) {
-							button.attachEvent("onmouseup", function () {
-								BigBlockAudio.play("bing");
-							});
-						}
-						body[0].appendChild(button);						
+						if (!BigBlockAudio.loading_complete) {
+							button = document.createElement("input");
+							button.setAttribute("type", "submit");
+							button.setAttribute("value", "bing");
+							if (button.addEventListener) {
+								button.addEventListener("mouseup", function () {
+									BigBlockAudio.play("bing");
+								}, false); 
+							} else if (button.attachEvent) {
+								button.attachEvent("onmouseup", function () {
+									BigBlockAudio.play("bing");
+								});
+							}
+							body[0].appendChild(button);
+						}						
 					});					
 				} else {
 					loading = document.getElementById("loading");

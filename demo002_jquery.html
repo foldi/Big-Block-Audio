@@ -31,13 +31,15 @@
 				BigBlockAudio.files_to_play = ["bing", "blip", "bonk", "boom", "coin", "eeoo", "jump"];
 				for (i = 0; i < BigBlockAudio.files_to_play.length; i++) {
 					filename = BigBlockAudio.files_to_play[i];
-					BigBlockAudio.add(filename, path, false, function (e) {
-						$("#loading").remove();
-						button = $("<input></input>").attr("type", "submit").attr("value", e.target.id).bind("click", function () {
-							BigBlockAudio.play(e.target.id);
+					if (!BigBlockAudio.loading_complete) {
+						BigBlockAudio.add(filename, path, false, function (e) {
+							$("#loading").remove();
+							button = $("<input></input>").attr("type", "submit").attr("value", e.target.id).bind("click", function (e) {
+								BigBlockAudio.play(e.target.value);
+							});
+							$("body").append(button);
 						});
-						$("body").append(button);
-					});
+					}
 				}				
 				
 
