@@ -120,13 +120,13 @@ BigBlockAudio = (function () {
 					i = this.playlist[id];
 
 					if (i.addEventListener) {
-						i.addEventListener("canplay", function (e) {
+						i.addEventListener("canplaythrough", function (e) {
 							if (after_load && typeof(after_load) === "function") {							
 								BigBlockAudio.eventHandler(e, after_load(e));
 							} else {
 								BigBlockAudio.eventHandler(e);
 							}
-						}, false); // add canplay event listener
+						}, false); // add canplaythrough event listener
 						i.addEventListener("loadstart", BigBlockAudio.eventHandler, false); // add loadstart event listener
 						i.addEventListener("progress", BigBlockAudio.eventHandler, false); 
 						i.addEventListener("suspend", BigBlockAudio.eventHandler, false); 
@@ -135,7 +135,7 @@ BigBlockAudio = (function () {
 						i.addEventListener("emptied", BigBlockAudio.eventHandler, false); 
 						i.addEventListener("stalled", BigBlockAudio.eventHandler, false); 
 					} else if (a.attachEvent) { // IE
-						i.attachEvent("canplay", function (e) {BigBlockAudio.eventHandler(e, after_load);}, false);
+						i.attachEvent("canplaythrough", function (e) {BigBlockAudio.eventHandler(e, after_load);}, false);
 						i.attachEvent("loadstart", BigBlockAudio.eventHandler, false);
 						i.attachEvent("progress", BigBlockAudio.eventHandler, false); 
 						i.attachEvent("suspend", BigBlockAudio.eventHandler, false); 
@@ -204,20 +204,22 @@ BigBlockAudio = (function () {
 				case "stalled":
 					message = "BigBlockAudio: eventHandler: The user agent is trying to fetch " + e.target.id + ", but data is unexpectedly not forthcoming.";					
 					break;																															
-				case "canplay":
-					message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is ready to play.";
-					if (typeof(after_load) === "function" && !BigBlockAudio.loading_complete) {
-						setTimeout(function () {
-							after_load();
-						}, 0);
+				case "canplaythrough":
+					if (!BigBlockAudio.playlist[e.target.id].loaded) { // Firefox 3.6, Opera 11 continue to fire canplaythrough; Safari 5, Chrome 9 do not fire even though the event still exists
+						message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is ready to play.";
+						if (typeof(after_load) === "function" && !BigBlockAudio.loading_complete) {
+							setTimeout(function () {
+								after_load();
+							}, 0);
+						}
+						BigBlockAudio.playlist[e.target.id].loaded = true;
 					}
-					BigBlockAudio.playlist[e.target.id].loaded = true;
 					break;
 			}
 
-			// remove file from loading array if event is "error", "abort", or "canplay"
+			// remove file from loading array if event is "error", "abort", or "canplaythrough"
 			if (e.type !== "loadstart" && e.type !== "progress" && e.type !== "suspend" && e.type !== "emptied" && e.type !== "stalled") {
-				if (!BigBlockAudio.loading_complete) { // if canplay continues to fire, check if all files have loaded
+				if (!BigBlockAudio.loading_complete) { // if canplaythrough continues to fire, check if all files have loaded; Firefox 3.6, Opera 11 continue to fire canplaythrough; Safari 5, Chrome 9 do not fire even though the event still exists
 					for (i = 0; i < BigBlockAudio.loading_list.length; i++) {
 						if (BigBlockAudio.loading_list[i] === e.target.id) {
 							BigBlockAudio.loading_list.splice(i, 1);
@@ -232,6 +234,7 @@ BigBlockAudio = (function () {
 						}			
 					}
 				}
+				BigBlockAudio.playlist[e.target.id].removeEventListener("canplaythrough", this.eventHandler, false); // run this even though canplaythrough cannot be removed; someday?
 				BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
 				BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
 				BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
@@ -334,6 +337,10 @@ BigBlockAudio = (function () {
 
 								rs = this.getReadyState(this.single_channel_id, true);
 
+								if (this.debug) {
+									BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
+								}
+								
 								if (rs.state >= 2 && this.muted === false) { // check that the sound is ready to play
 
 									var start_time = this.track_labels[id].start_time;
@@ -357,10 +364,6 @@ BigBlockAudio = (function () {
 										}										
 									}, duration);								
 
-								} else {
-									if (this.debug) {
-										BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
-									}
 								}
 
 							}
