@@ -3,13 +3,14 @@ $.fn.BigBlockAudio = function(options) {
 
 	var defaults = {
 		debug_message_target: false, // a jquery object that will receive debug messages; typically a textarea
-		debug: false, // set to true to print messages to the browser console
+		debug: true, // set to true to print messages to the browser console
 		after_loading_complete: false, // function to run after all files have successfully loaded
-		is_single_channel: false, // set to true to use one file and track labels
-		single_channel_id: false, // set equal to the filename of the single audio file; do not include file extension
+		is_single_channel: true, // set to true to use one file and track labels
+		filename: false, // set equal to the filename of the single audio file; do NOT include file extension
+		min_duration: 500,
 		format: ["wav", "mp3", "ogg"], // formats included in the path of the audio files sorted in order of preference
 		track_labels: {}, // key/value pairs describing the start time and duration of clips in the single channel audio file
-		last_play_delay: 0 // the time to wait before allowing the single channel Audio element to play
+		after_loading_complete: null // function to run after all files have successfully loaded
 	};
 	var options = $.extend(defaults, options);
 	
@@ -17,7 +18,7 @@ $.fn.BigBlockAudio = function(options) {
 
 		BigBlockAudio = (function () {
 
-			var Log, supported;
+			var Log, supported, user_agent;
 
 			Log = function (str) {
 				var msg;
@@ -43,31 +44,33 @@ $.fn.BigBlockAudio = function(options) {
 			if (typeof(window.Audio) === "undefined") {
 				supported = false;
 				Log("This browser does not support HTML5 audio.");
-			}															
+			}
 
+			user_agent = navigator.userAgent.toLowerCase();
+			
 			return {
-				
-				// user defined properties
 				
 				debug_message_target: options.debug_message_target, 
 				debug: options.debug,
 				after_loading_complete: options.after_loading_complete,
-				is_single_channel: options.is_single_channel, 
-				single_channel_id: options.single_channel_id, 
+				is_single_channel: options.is_single_channel,
+				filename: options.filename,
 				format: options.format,
 				track_labels: options.track_labels,
-				last_play_delay: options.last_play_delay, 
+				min_duration: options.min_duration,
+				after_loading_complete : options.after_loading_complete,
 				
-				// end user defined properties
-								
+				//
+				
+				user_agent : user_agent,
 				supported : supported,
 				playlist : {}, // contains instances of Audio elements
 				pause_timeout: null,
-				last_play: new Date().getTime(), // the last time the single channel Audio element played 
-				muted : false,
+				last_play: new Date().getTime(), // the last time an audio element played 
+				muted : false,	
 				loading_list: [],
 				loading_complete: false,
-				
+
 				/**
 				 * Adds an audio element to the DOM. Also runs load() to set up the audio file for playback.
 				 * Uses new Audio([url]) which returns a new audio element, with the src attribute set to the value passed in the argument, if applicable.
@@ -79,7 +82,7 @@ $.fn.BigBlockAudio = function(options) {
 				 * 
 				 */				
 				add: function(id, path, loop, after_load) {
-
+			
 					var f, i, mime_type, supported_mime_type, audio;
 
 					if (supported) {
@@ -100,7 +103,8 @@ $.fn.BigBlockAudio = function(options) {
 							mime_type = BigBlockAudio.getMimeTypeFromFileExt(this.format[f]); // get mime-type
 
 							audio = new Audio(path + id + "." + this.format[f]); // create audio element
-
+							audio.preload = "metadata";
+							audio.autoplay = false;
 							if (loop) {
 								audio.loop = loop;
 							}
@@ -131,42 +135,34 @@ $.fn.BigBlockAudio = function(options) {
 							i = this.playlist[id];
 
 							if (i.addEventListener) {
-								i.addEventListener("canplay", function (e) {
-									BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", this.eventHandler, false);
-									BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
-									BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
-									BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
-									BigBlockAudio.playlist[e.target.id].removeEventListener("abort", this.eventHandler, false);
-									BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
-									BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
-									BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
+								i.addEventListener("loadeddata", function (e) {
 									if (after_load && typeof(after_load) === "function") {							
 										BigBlockAudio.eventHandler(e, after_load(e));
 									} else {
 										BigBlockAudio.eventHandler(e);
 									}
-								}, false); // add canplay event listener
-								i.addEventListener("loadstart", this.eventHandler, false); // add loadstart event listener
-								i.addEventListener("progress", this.eventHandler, false); 
-								i.addEventListener("suspend", this.eventHandler, false); 
-								i.addEventListener("abort", this.eventHandler, false); 
-								i.addEventListener("error", this.eventHandler, false); 
-								i.addEventListener("emptied", this.eventHandler, false); 
-								i.addEventListener("stalled", this.eventHandler, false); 
+								}, false); // add canplaythrough event listener
+								i.addEventListener("loadstart", BigBlockAudio.eventHandler, false); // add loadstart event listener
+								i.addEventListener("progress", BigBlockAudio.eventHandler, false); 
+								i.addEventListener("suspend", BigBlockAudio.eventHandler, false); 
+								i.addEventListener("abort", BigBlockAudio.eventHandler, false); 
+								i.addEventListener("error", BigBlockAudio.eventHandler, false); 
+								i.addEventListener("emptied", BigBlockAudio.eventHandler, false); 
+								i.addEventListener("stalled", BigBlockAudio.eventHandler, false); 
 							} else if (a.attachEvent) { // IE
-								i.attachEvent("canplay", function (e) {BigBlockAudio.eventHandler(e, after_load);}, false);
-								i.attachEvent("loadstart", this.eventHandler, false);
-								i.attachEvent("progress", this.eventHandler, false); 
-								i.attachEvent("suspend", this.eventHandler, false); 
-								i.attachEvent("abort", this.eventHandler, false); 
-								i.attachEvent("error", this.eventHandler, false); 
-								i.attachEvent("emptied", this.eventHandler, false); 
-								i.attachEvent("stalled", this.eventHandler, false);					
+								i.attachEvent("loadeddata", function (e) {BigBlockAudio.eventHandler(e, after_load);}, false);
+								i.attachEvent("loadstart", BigBlockAudio.eventHandler, false);
+								i.attachEvent("progress", BigBlockAudio.eventHandler, false); 
+								i.attachEvent("suspend", BigBlockAudio.eventHandler, false); 
+								i.attachEvent("abort", BigBlockAudio.eventHandler, false); 
+								i.attachEvent("error", BigBlockAudio.eventHandler, false); 
+								i.attachEvent("emptied", BigBlockAudio.eventHandler, false); 
+								i.attachEvent("stalled", BigBlockAudio.eventHandler, false);					
 							}
 
 							if (i.load) {
 								this.loading_list.push(id);						
-								i.load(); // load the file
+								this.load_file(id); // load the file
 								/*
 								 * Firefox requires calling load() on the audio object. Safari seems to auto load the file, but does not throw an error calling load() directly.
 								 */							
@@ -191,11 +187,11 @@ $.fn.BigBlockAudio = function(options) {
 					}
 
 				},
-				eventHandler: function (e, after_load) {
+				eventHandler: function (e, after_load) { // handles all loading events
 
 					var i, message;
 
-					message = "An audio event for " + e.target.id + " just fired.";
+					message = "An audio event (" + e.type + ") for " + e.target.id + " just fired.";
 
 					switch (e.type) {
 						case "loadstart":
@@ -223,37 +219,46 @@ $.fn.BigBlockAudio = function(options) {
 						case "stalled":
 							message = "BigBlockAudio: eventHandler: The user agent is trying to fetch " + e.target.id + ", but data is unexpectedly not forthcoming.";					
 							break;																															
-						case "canplay":
-							message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is ready to play.";
-							if (typeof(after_load) === "function") {
-								setTimeout(function () {after_load();}, 0);
+						case "loadeddata":
+							if (!BigBlockAudio.playlist[e.target.id].loaded) { // Firefox 3.6, Opera 11 continue to fire canplaythrough; Safari 5, Chrome 9 do not fire even though the event still exists
+								message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is ready to play.";
+								if (typeof(after_load) === "function" && !BigBlockAudio.loading_complete) {
+									setTimeout(function () {
+										after_load();
+									}, 0);
+								}
+								BigBlockAudio.playlist[e.target.id].loaded = true;
 							}
 							break;
 					}
 
-					// remove file from loading array
+					// remove file from loading array if event is "error", "abort", or "canplaythrough"
 					if (e.type !== "loadstart" && e.type !== "progress" && e.type !== "suspend" && e.type !== "emptied" && e.type !== "stalled") {
-						for (i = 0; i < BigBlockAudio.loading_list.length; i++) {
-							if (BigBlockAudio.loading_list[i] === e.target.id) {
-								BigBlockAudio.loading_list.splice(i, 1);
+						if (!BigBlockAudio.loading_complete) { // if canplaythrough continues to fire, check if all files have loaded; Firefox 3.6, Opera 11 continue to fire canplaythrough; Safari 5, Chrome 9 do not fire even though the event still exists
+							for (i = 0; i < BigBlockAudio.loading_list.length; i++) {
+								if (BigBlockAudio.loading_list[i] === e.target.id) {
+									BigBlockAudio.loading_list.splice(i, 1);
 
-								if (BigBlockAudio.loading_list.length < 1) {
-									BigBlockAudio.loading_complete = true;
-									if (BigBlockAudio.after_loading_complete && typeof(BigBlockAudio.after_loading_complete) === "function") {
-										BigBlockAudio.after_loading_complete();
-									}
-		 						}
-								break;
-							}			
+									if (BigBlockAudio.loading_list.length < 1) {
+										BigBlockAudio.loading_complete = true;
+										if (BigBlockAudio.after_loading_complete && typeof(BigBlockAudio.after_loading_complete) === "function") {
+											BigBlockAudio.after_loading_complete();
+										}
+			 						}
+									break;
+								}			
+							}
 						}
-						BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
-						BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
-						BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
-						BigBlockAudio.playlist[e.target.id].removeEventListener("abort", this.eventHandler, false);
-						BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
-						BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
-						BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
-						BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", this.eventHandler, false);
+						if (BigBlockAudio.playlist[e.target.id]) {
+							BigBlockAudio.playlist[e.target.id].removeEventListener("loadeddata", this.eventHandler, false); // run this even though canplaythrough cannot be removed; someday?
+							BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("abort", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
+							BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
+							BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
+						}
 					}
 
 					if (BigBlockAudio.debug === true) {
@@ -297,7 +302,7 @@ $.fn.BigBlockAudio = function(options) {
 				 * @param {String} id
 				 * 
 				 */			
-				load: function (id) {
+				load_file: function (id) {
 
 					if (typeof(this.playlist[id]) !== "undefined" && this.supported) { // must be a valid audio file; browser must support HTML5 Audio
 
@@ -324,7 +329,7 @@ $.fn.BigBlockAudio = function(options) {
 				 */			
 				play: function (id, before_play, after_play) {
 
-					var duration, rs;
+					var start_time, duration, time_now, rs;
 
 					if (this.supported) { // must be a valid audio file; browser must support HTML5 Audio
 
@@ -342,53 +347,57 @@ $.fn.BigBlockAudio = function(options) {
 
 							if (this.is_single_channel) { // single channel audio
 
-								if (typeof(this.playlist[this.single_channel_id]) !== "undefined") {
+								if (typeof this.playlist[this.filename] !== "undefined") {
 
-									var time_now = new Date().getTime();
-									if (time_now - this.last_play > this.last_play_delay) { // check that this.last_play_delay has passed
+									rs = this.getReadyState(this.filename, true);
 
-										rs = this.getReadyState(this.single_channel_id, true);
-
-										if (rs.state >= 2 && this.muted === false) { // check that the sound is ready to play
-
-											var start_time = this.track_labels[id].start_time;
-											var duration = this.track_labels[id].duration;
-
-											this.pause(this.single_channel_id); // pause the sound
-
-											this.setCurrentTime(this.single_channel_id, start_time); // set the time to start playing
-
-											if (before_play && typeof(before_play) === "function") { // run before_play
-												before_play();
-											}
-
-											this.playlist[this.single_channel_id].play(); // play the sound
-											this.last_play = time_now;
-
-											this.pause_timeout = setTimeout(function () {
-												BigBlockAudio.pause(BigBlockAudio.single_channel_id);
-												if (after_play && typeof(after_play) === "function") { // run after_play
-													after_play();
-												}										
-											}, duration);								
-
-										} else {
-											if (this.debug) {
-												BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
-											}
-										}
-
+									if (this.debug) {
+										BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
 									}
 
+									if (rs.state === 4 && this.muted === false) { // check that the sound is ready to play
+
+										start_time = this.track_labels[id].start_time/1000;
+										if (this.track_labels[id].duration > this.min_duration) {
+											duration = this.track_labels[id].duration;
+										} else {
+											duration = this.min_duration;
+										}
+
+
+										this.pause(this.filename); // pause the sound
+
+										this.setCurrentTime(this.filename, start_time); // set the time to start playing
+
+										if (before_play && typeof(before_play) === "function") { // run before_play
+											before_play();
+										}
+
+										this.playlist[this.filename].play(); // play the sound
+										this.last_play = time_now;
+
+										this.pause_timeout = setTimeout(function () {
+											BigBlockAudio.pause(BigBlockAudio.filename);
+											if (after_play && typeof(after_play) === "function") { // run after_play
+												after_play();
+											}										
+										}, duration);								
+
+									}
 								}
 
 							} else { // multi-channel audio
 
 								if (typeof(this.playlist[id]) !== "undefined") {
 
-									rs = this.getReadyState(id, true);
+									rs = this.getReadyState(id, this.debug);
+
+									if (this.debug) {
+										BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
+									}
 
 									if (rs.state >= 2 && this.muted === false) { // check that the sound is ready to play
+
 										if (typeof(before_play) !== "undefined") {
 											before_play();
 										}
