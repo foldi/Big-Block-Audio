@@ -11,7 +11,7 @@
 
 BigBlockAudio = (function () {
 	
-	var Log, supported;
+	var Log, supported, user_agent;
 	
 	Log = function (str) {
 		var msg;
@@ -38,17 +38,18 @@ BigBlockAudio = (function () {
 	if (typeof(window.Audio) === "undefined") {
 		supported = false;
 		Log("This browser does not support HTML5 audio.");
-	}															
+	}
+	
+	user_agent = navigator.userAgent.toLowerCase();															
 
 	return {
-
-		alias : "audio",
+		user_agent : user_agent,
 		supported : supported,
 		playlist : {}, // contains instances of Audio elements
 		pause_timeout: null,
 		debug_message_target: null, // the id of a dom element that will receive debug messages; typically a textarea
 		debug: false,
-		is_single_channel: true, 
+		is_single_channel: true,
 		filename: null, // the filename of the single channel Audio element; should NOT include extension
 		min_duration: 500,
 		last_play: new Date().getTime(), // the last time an audio element played 

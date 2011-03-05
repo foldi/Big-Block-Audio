@@ -16,6 +16,9 @@
 			BigBlockAudio.ready = function () {
 
 				if (BigBlockAudio.supported) {
+					if (BigBlockAudio.user_agent.search("opera") > -1) {
+						BigBlockAudio.format = ["ogg"];
+					}					
 					BigBlockAudio.debug_message_target = document.getElementById("debug_messages");
 					BigBlockAudio.debug = true;
 					BigBlockAudio.after_loading_complete = function () {
@@ -36,18 +39,19 @@
 						}
 					};					
 					BigBlockAudio.is_single_channel = true;
-					BigBlockAudio.single_channel_id = "alleffects";
+					BigBlockAudio.filename = "alleffects";
 					BigBlockAudio.track_labels = {
 						bing: {
 							start_time: 0,
-							duration: 1
+							duration: 777
 						},
 						blip: {
-							start_time: 1000
+							start_time: 1000,
+							duration: 346
 						},
 						bonk: {
 							start_time: 2000,
-							duration: 1
+							duration: 392
 						},
 						boom: {
 							start_time: 3000,
@@ -67,7 +71,7 @@
 						}
 					};
 
-					BigBlockAudio.add(BigBlockAudio.single_channel_id, path, false, function () {
+					BigBlockAudio.add(BigBlockAudio.filename, path, false, function () {
 						for (i in BigBlockAudio.track_labels) {
 							if (BigBlockAudio.track_labels.hasOwnProperty(i)) {
 								BigBlockAudio.create_button(i);
