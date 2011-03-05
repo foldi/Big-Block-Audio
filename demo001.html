@@ -9,18 +9,21 @@
 		
 		<script type="text/javascript">
 			
-			var i, path, body, loading, button, filename, complete_msg, error_msg;
+			var path;
 			
 			path = "http://www.foldifoldi.com/audio/";
 						
 			BigBlockAudio.ready = function () {
-
+				
+				var i, body, loading, filename;
+				
 				if (BigBlockAudio.supported) {
 					if (BigBlockAudio.user_agent.search("opera") > -1) {
 						BigBlockAudio.format = ["ogg"];
 					}					
 					BigBlockAudio.debug = true;
 					BigBlockAudio.after_loading_complete = function () {
+						var container_complete, error_msg, complete_msg;
 						if (BigBlockAudio.loading_complete === true) {
 							if (!document.getElementById("container_complete")) {
 								container_complete = document.createElement("div");
@@ -28,6 +31,7 @@
 								container_complete.setAttribute("style", "padding-top:10px;");
 								complete_msg = document.createTextNode("loading complete!");
 								container_complete.appendChild(complete_msg);
+								body = document.getElementsByTagName("body");
 								body[0].appendChild(container_complete);
 								for (var i in BigBlockAudio.playlist) { // for debugging
 									if (BigBlockAudio.playlist.hasOwnProperty(i)) {
@@ -90,6 +94,7 @@
 			}
 			
 			BigBlockAudio.create_button = function (filename) {
+				var loading, body, button;
 				loading = document.getElementById("loading");
 				body = document.getElementsByTagName("body");
 				if (loading) {
