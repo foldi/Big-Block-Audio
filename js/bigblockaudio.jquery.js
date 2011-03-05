@@ -11,9 +11,11 @@
  */
 
 (function($){
-$.fn.BigBlockAudio = function(options) {
-
-	var defaults = {
+$.fn.BigBlockAudio = function(params) {
+	
+	var defaults, options;
+	
+	defaults = {
 		debug_message_target: $("#bigblockaudio_debug_messages"), // a jquery object that will receive debug messages; typically a textarea
 		debug: false, // set to true to print messages to the browser console
 		after_loading_complete: false, // function to run after all files have successfully loaded
@@ -25,7 +27,7 @@ $.fn.BigBlockAudio = function(options) {
 		before_load: null,
 		after_loading_complete: null // function to run after all files have successfully loaded
 	};
-	var options = $.extend(defaults, options);
+	options = $.extend(defaults, params);
 	
     return this.each(function() {
 
