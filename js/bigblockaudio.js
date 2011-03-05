@@ -48,12 +48,12 @@ BigBlockAudio = (function () {
 		pause_timeout: null,
 		debug_message_target: null, // the id of a dom element that will receive debug messages; typically a textarea
 		debug: false,
-		is_single_channel: false, 
-		single_channel_id: null, // the id of the single channel Audio element
-		last_play: new Date().getTime(), // the last time the single channel Audio element played 
-		last_play_delay: 50, // the time to wait before allowing the single channel Audio element to play
+		is_single_channel: true, 
+		filename: null, // the filename of the single channel Audio element; should NOT include extension
+		min_duration: 500,
+		last_play: new Date().getTime(), // the last time an audio element played 
 		muted : false,	
-		format: ["wav", "mp3", "ogg"],
+		format: ["wav", "ogg", "mp3"],
 		loading_list: [],
 		loading_complete: false,
 		after_loading_complete: false,
@@ -89,7 +89,8 @@ BigBlockAudio = (function () {
 					mime_type = BigBlockAudio.getMimeTypeFromFileExt(this.format[f]); // get mime-type
 
 					audio = new Audio(path + id + "." + this.format[f]); // create audio element
-
+					audio.preload = "metadata";
+					audio.autoplay = false;
 					if (loop) {
 						audio.loop = loop;
 					}
@@ -120,7 +121,7 @@ BigBlockAudio = (function () {
 					i = this.playlist[id];
 
 					if (i.addEventListener) {
-						i.addEventListener("canplaythrough", function (e) {
+						i.addEventListener("loadeddata", function (e) {
 							if (after_load && typeof(after_load) === "function") {							
 								BigBlockAudio.eventHandler(e, after_load(e));
 							} else {
@@ -135,7 +136,7 @@ BigBlockAudio = (function () {
 						i.addEventListener("emptied", BigBlockAudio.eventHandler, false); 
 						i.addEventListener("stalled", BigBlockAudio.eventHandler, false); 
 					} else if (a.attachEvent) { // IE
-						i.attachEvent("canplaythrough", function (e) {BigBlockAudio.eventHandler(e, after_load);}, false);
+						i.attachEvent("loadeddata", function (e) {BigBlockAudio.eventHandler(e, after_load);}, false);
 						i.attachEvent("loadstart", BigBlockAudio.eventHandler, false);
 						i.attachEvent("progress", BigBlockAudio.eventHandler, false); 
 						i.attachEvent("suspend", BigBlockAudio.eventHandler, false); 
@@ -176,7 +177,7 @@ BigBlockAudio = (function () {
 
 			var i, message;
 
-			message = "An audio event for " + e.target.id + " just fired.";
+			message = "An audio event (" + e.type + ") for " + e.target.id + " just fired.";
 
 			switch (e.type) {
 				case "loadstart":
@@ -204,7 +205,7 @@ BigBlockAudio = (function () {
 				case "stalled":
 					message = "BigBlockAudio: eventHandler: The user agent is trying to fetch " + e.target.id + ", but data is unexpectedly not forthcoming.";					
 					break;																															
-				case "canplaythrough":
+				case "loadeddata":
 					if (!BigBlockAudio.playlist[e.target.id].loaded) { // Firefox 3.6, Opera 11 continue to fire canplaythrough; Safari 5, Chrome 9 do not fire even though the event still exists
 						message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is ready to play.";
 						if (typeof(after_load) === "function" && !BigBlockAudio.loading_complete) {
@@ -234,7 +235,7 @@ BigBlockAudio = (function () {
 						}			
 					}
 				}
-				BigBlockAudio.playlist[e.target.id].removeEventListener("canplaythrough", this.eventHandler, false); // run this even though canplaythrough cannot be removed; someday?
+				BigBlockAudio.playlist[e.target.id].removeEventListener("loadeddata", this.eventHandler, false); // run this even though canplaythrough cannot be removed; someday?
 				BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
 				BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
 				BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
@@ -312,7 +313,7 @@ BigBlockAudio = (function () {
 		 */			
 		play: function (id, before_play, after_play) {
 
-			var duration, rs;
+			var start_time, duration, time_now, rs;
 
 			if (this.supported) { // must be a valid audio file; browser must support HTML5 Audio
 
@@ -330,44 +331,43 @@ BigBlockAudio = (function () {
 
 					if (this.is_single_channel) { // single channel audio
 
-						if (typeof(this.playlist[this.single_channel_id]) !== "undefined") {
+						if (typeof this.playlist[this.filename] !== "undefined") {
 
-							var time_now = new Date().getTime();
-							if (time_now - this.last_play > this.last_play_delay) { // check that this.last_play_delay has passed
+							rs = this.getReadyState(this.filename, true);
 
-								rs = this.getReadyState(this.single_channel_id, true);
+							if (this.debug) {
+								BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
+							}
+							
+							if (rs.state >= 2 && this.muted === false) { // check that the sound is ready to play
 
-								if (this.debug) {
-									BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
+								start_time = this.track_labels[id].start_time/1000;
+								if (this.track_labels[id].duration > this.min_duration) {
+									duration = this.track_labels[id].duration;
+								} else {
+									duration = this.min_duration;
 								}
 								
-								if (rs.state >= 2 && this.muted === false) { // check that the sound is ready to play
 
-									var start_time = this.track_labels[id].start_time;
-									var duration = this.track_labels[id].duration;
+								this.pause(this.filename); // pause the sound
 
-									this.pause(this.single_channel_id); // pause the sound
-
-									this.setCurrentTime(this.single_channel_id, start_time); // set the time to start playing
-									
-									if (before_play && typeof(before_play) === "function") { // run before_play
-										before_play();
-									}
-									
-									this.playlist[this.single_channel_id].play(); // play the sound
-									this.last_play = time_now;
-
-									this.pause_timeout = setTimeout(function () {
-										BigBlockAudio.pause(BigBlockAudio.single_channel_id);
-										if (after_play && typeof(after_play) === "function") { // run after_play
-											after_play();
-										}										
-									}, duration);								
-
+								this.setCurrentTime(this.filename, start_time); // set the time to start playing
+								
+								if (before_play && typeof(before_play) === "function") { // run before_play
+									before_play();
 								}
+								
+								this.playlist[this.filename].play(); // play the sound
+								this.last_play = time_now;
+
+								this.pause_timeout = setTimeout(function () {
+									BigBlockAudio.pause(BigBlockAudio.filename);
+									if (after_play && typeof(after_play) === "function") { // run after_play
+										after_play();
+									}										
+								}, duration);								
 
 							}
-
 						}
 
 					} else { // multi-channel audio
@@ -381,6 +381,7 @@ BigBlockAudio = (function () {
 							}
 								
 							if (rs.state >= 2 && this.muted === false) { // check that the sound is ready to play
+								
 								if (typeof(before_play) !== "undefined") {
 									before_play();
 								}
