@@ -121,14 +121,6 @@ BigBlockAudio = (function () {
 
 					if (i.addEventListener) {
 						i.addEventListener("canplay", function (e) {
-							//BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", BigBlockAudio.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", BigBlockAudio.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("progress", BigBlockAudio.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", BigBlockAudio.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("abort", BigBlockAudio.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("error", BigBlockAudio.eventHandler, false);
-							BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", BigBlockAudio.eventHandler, false);				
-							BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", BigBlockAudio.eventHandler, false);
 							if (after_load && typeof(after_load) === "function") {							
 								BigBlockAudio.eventHandler(e, after_load(e));
 							} else {
@@ -180,7 +172,7 @@ BigBlockAudio = (function () {
 			}
 
 		},
-		eventHandler: function (e, after_load) {
+		eventHandler: function (e, after_load) { // handles all loading events
 
 			var i, message;
 
@@ -214,27 +206,31 @@ BigBlockAudio = (function () {
 					break;																															
 				case "canplay":
 					message = "BigBlockAudio: eventHandler: Audio file " + e.target.id + " is ready to play.";
-					if (typeof(after_load) === "function" && !BigBlockAudio.loading_complete && BigBlockAudio.playlist[e.target.id].loaded) {
-						setTimeout(function () {after_load();}, 0);
+					if (typeof(after_load) === "function" && !BigBlockAudio.loading_complete) {
+						setTimeout(function () {
+							after_load();
+						}, 0);
 					}
 					BigBlockAudio.playlist[e.target.id].loaded = true;
 					break;
 			}
 
-			// remove file from loading array
+			// remove file from loading array if event is "error", "abort", or "canplay"
 			if (e.type !== "loadstart" && e.type !== "progress" && e.type !== "suspend" && e.type !== "emptied" && e.type !== "stalled") {
-				for (i = 0; i < BigBlockAudio.loading_list.length; i++) {
-					if (BigBlockAudio.loading_list[i] === e.target.id) {
-						BigBlockAudio.loading_list.splice(i, 1);
+				if (!BigBlockAudio.loading_complete) { // if canplay continues to fire, check if all files have loaded
+					for (i = 0; i < BigBlockAudio.loading_list.length; i++) {
+						if (BigBlockAudio.loading_list[i] === e.target.id) {
+							BigBlockAudio.loading_list.splice(i, 1);
 
-						if (BigBlockAudio.loading_list.length < 1) {
-							BigBlockAudio.loading_complete = true;
-							if (BigBlockAudio.after_loading_complete && typeof(BigBlockAudio.after_loading_complete) === "function") {
-								BigBlockAudio.after_loading_complete();
-							}
- 						}
-						break;
-					}			
+							if (BigBlockAudio.loading_list.length < 1) {
+								BigBlockAudio.loading_complete = true;
+								if (BigBlockAudio.after_loading_complete && typeof(BigBlockAudio.after_loading_complete) === "function") {
+									BigBlockAudio.after_loading_complete();
+								}
+	 						}
+							break;
+						}			
+					}
 				}
 				BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
 				BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
@@ -243,7 +239,6 @@ BigBlockAudio = (function () {
 				BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
 				BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
 				BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
-				//BigBlockAudio.playlist[e.target.id].removeEventListener("canplay", this.eventHandler, false);
 			}
 
 			if (BigBlockAudio.debug === true) {
@@ -376,8 +371,12 @@ BigBlockAudio = (function () {
 
 						if (typeof(this.playlist[id]) !== "undefined") {
 
-							rs = this.getReadyState(id, true);
-
+							rs = this.getReadyState(id, this.debug);
+							
+							if (this.debug) {
+								BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
+							}
+								
 							if (rs.state >= 2 && this.muted === false) { // check that the sound is ready to play
 								if (typeof(before_play) !== "undefined") {
 									before_play();
