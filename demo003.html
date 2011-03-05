@@ -11,7 +11,7 @@
 			
 			var i, path, body, loading, button, filename, complete_msg, error_msg;
 			
-			path = "audio/";
+			path = "http://www.foldifoldi.com/audio/";
 						
 			BigBlockAudio.ready = function () {
 
@@ -19,7 +19,7 @@
 					if (BigBlockAudio.user_agent.search("opera") > -1) {
 						BigBlockAudio.format = ["ogg"];
 					}					
-					BigBlockAudio.debug_message_target = document.getElementById("debug_messages");
+					BigBlockAudio.debug_message_target = document.getElementById("bigblockaudio_debug_messages");
 					BigBlockAudio.debug = true;
 					BigBlockAudio.after_loading_complete = function () {
 						if (BigBlockAudio.loading_complete === true) {
@@ -116,6 +116,6 @@
 	<body onload="setTimeout('BigBlockAudio.ready()', 0)">
 		<div id="loading">loading audio...</div>
 		<noscript>You must enable JavaScript to view this demo.</noscript>
-		<div><textarea id="debug_messages" cols="100" rows="20" style="margin-bottom:10px;"></textarea></div>
+		<div><textarea id="bigblockaudio_debug_messages" cols="100" rows="20" style="margin-bottom:10px;"></textarea></div>
 	</body>
 </html>

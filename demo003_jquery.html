@@ -16,48 +16,53 @@
 		
 			$(document).ready(function () {
 				$(document).BigBlockAudio({
-					debug_message_target: $("#debug_messages"),
-					debug: true,
+					//debug_message_target: $("#bigblockaudio_debug_messages"),
+					//debug: true,
 					after_loading_complete : function () {						
 						if (!document.getElementById("container_complete")) {
 							container_complete = $("<div></div>").text("loading complete!").attr("id", "container_complete").attr("style", "padding-top:10px;");
 							$("body").append(container_complete);
+							for (var i in BigBlockAudio.playlist) { // for debugging
+								if (BigBlockAudio.playlist.hasOwnProperty(i)) {
+									$("body").append(BigBlockAudio.playlist[i]);
+								}
+							}							
 						}
 					},
 					is_single_channel : true,
-					single_channel_id : "alleffects",
+					filename : "alleffects",
 					track_labels : {
 						bing: {
 							start_time: 0,
-							duration: 500
+							duration: 777
 						},
 						blip: {
-							start_time: 1.02,
-							duration: 100
+							start_time: 1000,
+							duration: 346
 						},
 						bonk: {
-							start_time: 1.574,
-							duration: 167
+							start_time: 2000,
+							duration: 392
 						},
 						boom: {
-							start_time: 2.21,
+							start_time: 3000,
 							duration: 491
 						},
 						coin: {
-							start_time: 3.153,
+							start_time: 4000,
 							duration: 358
 						},
 						eeoo: {
-							start_time: 3.975,
+							start_time: 5000,
 							duration: 457
 						},
 						jump: {
-							start_time: 4.878,
+							start_time: 6000,
 							duration: 179
 						}
 					}					
 				});
-				BigBlockAudio.add(BigBlockAudio.single_channel_id, path, false, function () {
+				BigBlockAudio.add("alleffects", path, false, function () {
 					if (!BigBlockAudio.loading_complete) {
 						for (i in BigBlockAudio.track_labels) {
 							if (BigBlockAudio.track_labels.hasOwnProperty(i)) {
@@ -76,7 +81,7 @@
 	</head>
 	<body>
 		<noscript>You must enable JavaScript to view this demo.</noscript>
-		<div><textarea id="debug_messages" cols="100" rows="5" style="margin-bottom:10px;"></textarea></div>
+		<div><textarea id="bigblockaudio_debug_messages" cols="100" rows="25" style="margin-bottom:10px;"></textarea></div>
 		<div id="loading">loading audio...</div>
 	</body>
 </html>
