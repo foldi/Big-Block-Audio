@@ -236,14 +236,16 @@ BigBlockAudio = (function () {
 						}			
 					}
 				}
-				BigBlockAudio.playlist[e.target.id].removeEventListener("loadeddata", this.eventHandler, false); // run this even though canplaythrough cannot be removed; someday?
-				BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
-				BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
-				BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
-				BigBlockAudio.playlist[e.target.id].removeEventListener("abort", this.eventHandler, false);
-				BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
-				BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
-				BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
+				if (BigBlockAudio.playlist[e.target.id]) {
+					BigBlockAudio.playlist[e.target.id].removeEventListener("loadeddata", this.eventHandler, false); // run this even though canplaythrough cannot be removed; someday?
+					BigBlockAudio.playlist[e.target.id].removeEventListener("loadstart", this.eventHandler, false);
+					BigBlockAudio.playlist[e.target.id].removeEventListener("progress", this.eventHandler, false);
+					BigBlockAudio.playlist[e.target.id].removeEventListener("suspend", this.eventHandler, false);
+					BigBlockAudio.playlist[e.target.id].removeEventListener("abort", this.eventHandler, false);
+					BigBlockAudio.playlist[e.target.id].removeEventListener("error", this.eventHandler, false);
+					BigBlockAudio.playlist[e.target.id].removeEventListener("emptied", this.eventHandler, false);				
+					BigBlockAudio.playlist[e.target.id].removeEventListener("stalled", this.eventHandler, false);
+				}
 			}
 
 			if (BigBlockAudio.debug === true) {
@@ -340,7 +342,7 @@ BigBlockAudio = (function () {
 								BigBlockAudio.Log("Audio: State: " + rs.state + " Message: " + rs.message);
 							}
 							
-							if (rs.state >= 2 && this.muted === false) { // check that the sound is ready to play
+							if (rs.state === 4 && this.muted === false) { // check that the sound is ready to play
 
 								start_time = this.track_labels[id].start_time/1000;
 								if (this.track_labels[id].duration > this.min_duration) {
