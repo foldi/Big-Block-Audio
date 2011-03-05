@@ -1,15 +1,28 @@
+/**
+ * Big Block Audio
+ * Copyright (C) 2011 Foldi, LLC
+ * Licensed under the MIT license.
+ *
+ * Provides an interface to play audio files in an HTML 5 compliant web browser.
+ * 
+ * @author Vince Allen 01-01-2011
+ * 
+ * version 1.0
+ */
+
 (function($){
 $.fn.BigBlockAudio = function(options) {
 
 	var defaults = {
-		debug_message_target: false, // a jquery object that will receive debug messages; typically a textarea
-		debug: true, // set to true to print messages to the browser console
+		debug_message_target: $("#bigblockaudio_debug_messages"), // a jquery object that will receive debug messages; typically a textarea
+		debug: false, // set to true to print messages to the browser console
 		after_loading_complete: false, // function to run after all files have successfully loaded
 		is_single_channel: true, // set to true to use one file and track labels
 		filename: false, // set equal to the filename of the single audio file; do NOT include file extension
-		min_duration: 500,
+		min_duration: 500, // the minimum duration of each audio clip in the audio file
 		format: ["wav", "mp3", "ogg"], // formats included in the path of the audio files sorted in order of preference
 		track_labels: {}, // key/value pairs describing the start time and duration of clips in the single channel audio file
+		before_load: null,
 		after_loading_complete: null // function to run after all files have successfully loaded
 	};
 	var options = $.extend(defaults, options);
@@ -28,8 +41,6 @@ $.fn.BigBlockAudio = function(options) {
 					} else {
 						if (typeof(console) !== "undefined") {
 							console.log(str); // output error to console
-						} else if (typeof(opera) !== "undefined" && typeof(opera.wiiremote) !== "undefined") { // wii uses alerts
-							alert(str);
 						} else if (typeof(opera) !== "undefined") { // opera uses error console
 							opera.postError(str);
 						}
@@ -37,7 +48,7 @@ $.fn.BigBlockAudio = function(options) {
 				} catch(e) {
 				  // do nothing
 				}			
-			}
+			};
 
 			supported = true;
 
@@ -58,6 +69,7 @@ $.fn.BigBlockAudio = function(options) {
 				format: options.format,
 				track_labels: options.track_labels,
 				min_duration: options.min_duration,
+				before_load: options.before_load,
 				after_loading_complete : options.after_loading_complete,
 				
 				//
@@ -98,6 +110,10 @@ $.fn.BigBlockAudio = function(options) {
 							BigBlockAudio.Log(e.name + ': ' + e.message);
 						}
 
+						if (typeof this.before_load === "function") {
+							this.before_load(id);
+						}
+						
 						for (f = 0; f < this.format.length; f++) { // loop thru formats to find the first that this browser will play
 
 							mime_type = BigBlockAudio.getMimeTypeFromFileExt(this.format[f]); // get mime-type
@@ -244,7 +260,7 @@ $.fn.BigBlockAudio = function(options) {
 										if (BigBlockAudio.after_loading_complete && typeof(BigBlockAudio.after_loading_complete) === "function") {
 											BigBlockAudio.after_loading_complete();
 										}
-			 						}
+									}
 									break;
 								}			
 							}

@@ -1,12 +1,13 @@
 /**
  * Big Block Audio
  * Copyright (C) 2011 Foldi, LLC
+ * Licensed under the MIT license.
  *
  * Provides an interface to play audio files in an HTML 5 compliant web browser.
  * 
  * @author Vince Allen 01-01-2011
  * 
- * 
+ * version 1.0
  */
 
 BigBlockAudio = (function () {
@@ -22,8 +23,6 @@ BigBlockAudio = (function () {
 			} else {
 				if (typeof(console) !== "undefined") {
 					console.log(str); // output error to console
-				} else if (typeof(opera) !== "undefined" && typeof(opera.wiiremote) !== "undefined") { // wii uses alerts
-					alert(str);
 				} else if (typeof(opera) !== "undefined") { // opera uses error console
 					opera.postError(str);
 				}
@@ -31,7 +30,7 @@ BigBlockAudio = (function () {
 		} catch(e) {
 		  // do nothing
 		}			
-	}
+	};
 	
 	supported = true;
 
@@ -58,6 +57,7 @@ BigBlockAudio = (function () {
 		loading_list: [],
 		loading_complete: false,
 		after_loading_complete: false,
+		before_load: false,
 		/**
 		 * Adds an audio element to the DOM. Also runs load() to set up the audio file for playback.
 		 * Uses new Audio([url]) which returns a new audio element, with the src attribute set to the value passed in the argument, if applicable.
@@ -68,12 +68,12 @@ BigBlockAudio = (function () {
 		 * @param {Function} after_load
 		 * 
 		 */				
-		add: function(id, path, loop, after_load) {
+		add: function(id, path, loop, before_load, after_load) {
 
 			var f, i, mime_type, supported_mime_type, audio;
-
+			
 			if (supported) {
-
+				
 				try {
 					if (typeof(id) === "undefined") {
 						throw new Error("An id is required");
@@ -84,7 +84,11 @@ BigBlockAudio = (function () {
 				} catch(e) {
 					BigBlockAudio.Log(e.name + ': ' + e.message);
 				}
-
+				
+				if (typeof before_load === "function") {
+					before_load(id);
+				}
+				
 				for (f = 0; f < this.format.length; f++) { // loop thru formats to find the first that this browser will play
 
 					mime_type = BigBlockAudio.getMimeTypeFromFileExt(this.format[f]); // get mime-type
@@ -231,7 +235,7 @@ BigBlockAudio = (function () {
 								if (BigBlockAudio.after_loading_complete && typeof(BigBlockAudio.after_loading_complete) === "function") {
 									BigBlockAudio.after_loading_complete();
 								}
-	 						}
+							}
 							break;
 						}			
 					}
