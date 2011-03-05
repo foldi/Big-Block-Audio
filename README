@@ -1,0 +1,20 @@
+Big Block Audio
+Copyright (C) 2011 Foldi, LLC
+Licensed under the MIT license.
+
+Version 1.0
+
+Created by Vince Allen 01-01-2011
+
+Big Block Audio provides an interface to play audio files in an HTML 5 compliant web browser using "track shifting". 
+
+Many web graphics use a technique called "sprite shifting" where many different graphics are included in one image file. The image is assigned to a element and shifted via CSS to specific locations to reveal different images.
+
+Track shifting is similar. If I want to play many different sounds on one web page, I could load a separate audio file for each sound. Or I could put all the sounds in one file and use Big Block Audio to shift the playback start time to play different sounds.
+
+Loading audio in a web browser is tricky when you're waiting and watching for several files download. It faster and much less error prone to just download one file and let Big Block Audio do the work of playing different sounds within the file. 
+
+To get started, visit the wiki at https://github.com/foldi/Big-Block-Audio/wiki
+
+Big Block Audio is a subset of code from a larger JavaScript framework for rendering pixel art called Big Block Framework. For more information, please visit http://www.bigblockframework.com 
+  
