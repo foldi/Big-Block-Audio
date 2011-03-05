@@ -25,6 +25,11 @@
 							complete_msg = document.createTextNode("loading complete!");
 							container_complete.appendChild(complete_msg);
 							body[0].appendChild(container_complete);
+							for (var i in BigBlockAudio.playlist) { // for debugging
+								if (BigBlockAudio.playlist.hasOwnProperty(i)) {
+									body[0].appendChild(BigBlockAudio.playlist[i]);
+								}
+							}
 						}
 					}
 				};
@@ -49,7 +54,7 @@
 								});
 							}
 							body[0].appendChild(button);
-							body[0].appendChild(BigBlockAudio.playlist.bing);
+
 						}						
 					});					
 				} else {

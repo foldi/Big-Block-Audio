@@ -27,6 +27,11 @@
 								complete_msg = document.createTextNode("loading complete!");
 								container_complete.appendChild(complete_msg);
 								body[0].appendChild(container_complete);
+								for (var i in BigBlockAudio.playlist) { // for debugging
+									if (BigBlockAudio.playlist.hasOwnProperty(i)) {
+										body[0].appendChild(BigBlockAudio.playlist[i]);
+									}
+								}								
 							}
 						}
 					};					
@@ -35,30 +40,29 @@
 					BigBlockAudio.track_labels = {
 						bing: {
 							start_time: 0,
-							duration: 500
+							duration: 1
 						},
 						blip: {
-							start_time: 1.02,
-							duration: 100
+							start_time: 1000
 						},
 						bonk: {
-							start_time: 1.574,
-							duration: 167
+							start_time: 2000,
+							duration: 1
 						},
 						boom: {
-							start_time: 2.21,
+							start_time: 3000,
 							duration: 491
 						},
 						coin: {
-							start_time: 3.153,
+							start_time: 4000,
 							duration: 358
 						},
 						eeoo: {
-							start_time: 3.975,
+							start_time: 5000,
 							duration: 457
 						},
 						jump: {
-							start_time: 4.878,
+							start_time: 6000,
 							duration: 179
 						}
 					};
@@ -108,6 +112,6 @@
 	<body onload="setTimeout('BigBlockAudio.ready()', 0)">
 		<div id="loading">loading audio...</div>
 		<noscript>You must enable JavaScript to view this demo.</noscript>
-		<div><textarea id="debug_messages" cols="100" rows="5" style="margin-bottom:10px;"></textarea></div>
+		<div><textarea id="debug_messages" cols="100" rows="20" style="margin-bottom:10px;"></textarea></div>
 	</body>
 </html>

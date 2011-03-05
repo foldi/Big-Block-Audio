@@ -25,6 +25,11 @@
 							complete_msg = document.createTextNode("loading complete!");
 							container_complete.appendChild(complete_msg);
 							body[0].appendChild(container_complete);
+							for (var i in BigBlockAudio.playlist) { // for debugging
+								if (BigBlockAudio.playlist.hasOwnProperty(i)) {
+									body[0].appendChild(BigBlockAudio.playlist[i]);
+								}
+							}							
 						}
 					}
 				};				
@@ -80,6 +85,6 @@
 	<body onload="setTimeout('BigBlockAudio.ready()', 0)">
 		<div id="loading">loading audio...</div>
 		<noscript>You must enable JavaScript to view this demo.</noscript>
-		<div><textarea id="debug_messages" cols="100" rows="5" style="margin-bottom:10px;"></textarea></div>
+		<div><textarea id="debug_messages" cols="100" rows="20" style="margin-bottom:10px;"></textarea></div>
 	</body>
 </html>
