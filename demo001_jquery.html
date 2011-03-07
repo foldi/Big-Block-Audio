@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name = "viewport" content = "user-scalable=no, width=device-width, initial-scale = 1.0">
+        <title>Big Block Audio</title>
+		
+		<script src="js/jquery.js"></script>
+		<script src="js/bigblockaudio.jquery.js"></script>
+		
+		<script type="text/javascript">
+
+			var path;
+		
+			path = "http://www.foldifoldi.com/audio/";			
+		
+			$(document).ready(function () {
+				$(document).BigBlockAudio({
+					debug_message_target: $("#debug_messages"),
+					debug: true,
+					after_loading_complete : function () {
+						if (BigBlockAudio.loading_complete === true) {
+							if (!document.getElementById("container_complete")) {
+								container_complete = $("<div></div>").text("loading complete!").attr("id", "container_complete").attr("style", "padding-top:10px;");
+								$("body").append(container_complete);
+							}
+						}
+					}
+				});
+				BigBlockAudio.add("bing", path, false, function () {
+					if (!BigBlockAudio.loading_complete) {
+						$("#loading").remove();
+						button = $("<input></input>").attr("type", "submit").attr("value", "bing").bind("click", function () {
+							BigBlockAudio.play("bing");
+						});
+						$("body").append(button);
+					}				
+				});
+			});
+		
+		</script>
+	</head>
+	<body>
+		<noscript>You must enable JavaScript to view this demo.</noscript>
+		<div><textarea id="debug_messages" cols="100" rows="5" style="margin-bottom:10px;"></textarea></div>
+		<div id="loading">loading audio...</div>
+	</body>
+</html>
